@@ -6,7 +6,7 @@ router.post('/', function(req, res, next)
 {
    console.log("body: ", req.body);
    if(req.body.lat != null && req.body.long != null) gpsDB.setGPSCoord(req.body.lat,req.body.long);
-   next();
+   res.send("Recorded");
 });
 
 module.exports = router;
