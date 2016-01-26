@@ -5,12 +5,16 @@ Navigation for 3DR Drones
 # Installation
 
     npm install flying-monkey
+    mv node_modules/flying-monkey .
+    rmdir node_modules
 
-And then
+or alternately clone this repo followed by
+
+    npm install
+
+And then to install the front end components in the flying-monkey directory
 
     bower install
-
-to install the front end components.
 
 # API
 

@@ -1,6 +1,6 @@
 {
   "name": "flying-monkey",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Navigation for 3DR drones",
   "author": "Jeff Waller <truthset@gmail.com>",
   "repository": {
