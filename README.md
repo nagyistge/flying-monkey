@@ -2,7 +2,7 @@ flying-monkey
 =============
 Navigation for 3DR Drones
 
-## Installation
+# Installation
 
     npm install flying-monkey
 
@@ -11,6 +11,8 @@ And then
     bower install
 
 to install the front end components.
+
+# API
 
 ## Current URL endpoints
 
