@@ -1,20 +1,20 @@
 {
   "name": "gpsFlow",
   "version": "0.0.1",
-  "description": "simple multiple GPS source collection",
+  "description": "navigation for #DR drones",
   "author": "Jeff Waller <truthset@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "git://github.com/waTeim/gpsFlow.git"
+    "url": "git://github.com/waTeim/flying-monkey.git"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/waTeim/gpsFlow/LICENSE"
+      "url": "https://github.com/waTeim/flying-monkey/LICENSE"
     }
   ],
   "bugs": {
-    "url": "https://github.com/waTeim/gpsFlow/issues"
+    "url": "https://github.com/waTeim/flying-monkey/issues"
   },
   "scripts": {
     "start": "node ./bin/www"
