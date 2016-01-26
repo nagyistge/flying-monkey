@@ -26,6 +26,7 @@
     "ejs": "~2.3.3",
     "express": "~4.13.1",
     "morgan": "~1.6.1",
+    "python-shell": "x",
     "serve-favicon": "~2.3.0"
   }
 }

@@ -3,17 +3,10 @@ var express = require('express');
 var router = express.Router();
 
 router.get('/', function(req, res, next) {
-  var gpsCoord = gpsDB.getGPSCoord();
-  var features = {
-    "type": "FeatureCollection",
-    "features": [{
-      "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [ gpsCoord.long, gpsCoord.lat ] },
-      "properties": {}
-    }]
-  }
+  var featureInfo = gpsDB.getFeatureInfo();
+  var featureObject = { "type": "FeatureCollection", features:featureInfo.features }
 
-  res.render('map', { features:JSON.stringify(features), frameCenterLat:gpsCoord.lat, frameCenterLong:gpsCoord.long });
+  res.render('map', { featureObject:JSON.stringify(featureObject), frameCenterLat:featureInfo.center.lat, frameCenterLong:featureInfo.center.long });
 });
 
 module.exports = router;
