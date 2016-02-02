@@ -1,5 +1,6 @@
-var gpsDB = require('gpsDB');
 var express = require('express');
+var gpsDB = require('../gpsDB');
+
 var router = express.Router();
 
 router.post('/', function(req, res, next)

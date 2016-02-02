@@ -1,6 +1,7 @@
 var express = require('express');
+var DB = require('../gpsDB');
+
 var router = express.Router();
-var DB = require('gpsDB');
 var gpsSrc = require('./collect_gps.js')(DB);
 
 /* GET home page. */
