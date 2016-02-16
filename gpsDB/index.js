@@ -1,7 +1,10 @@
+"use strict";
+
+const gpsSourceFactory = require('./gpsSource');
+
+var x = gpsSourceFactory.newSource();
 var gpsCoordinates = {};
 var keyDevice = null;
-var julia = require('node-julia');
-var kalman = julia.import('gpsDB/kalman');
 
 function prune()
 {
@@ -66,40 +69,23 @@ function getFeatureInfo()
 
 function addGPSCoord(deviceId,deviceName,millis,lat,long,alt)
 {
-  var gpsSrc = gpsCoordinates[deviceId];
-console.log("adding coord: ",lat,long,alt);
+  let source = gpsCoordinates[deviceId];
 
-  try
+  if(source == null)
   {
-    if(gpsSrc == null)
-    {
-      var linSSM = kalman.newSSM(1.0,0.00001,1.0,0.1);
-      var initialGuess = lat;
-
-console.log("created linSSM");
-
-      gpsSrc = 
+      source = 
       { 
         deviceId:deviceId,
         deviceName:deviceName,
-        samples:[{ millis:millis, lat:lat, long:long, alt:alt }],
-        filter:function(observations)
-        {
-          return kalman.filter(linSSM,observations,initialGuess); 
-        }
+        ops:gpsSourceFactory.newSource()
       };
 
-      gpsCoordinates[deviceId] = gpsSrc;
-    }
-    else gpsSrc.samples.push({ millis:millis, lat:lat, long:long, alt:alt });
+      gpsCoordinates[deviceId] = source;
+  }
 
-    console.log("guessing... ")
-    console.log("guess = ",gpsSrc.filter(gpsSrc.samples));
-  }
-  catch(e)
-  {
-    console.log("kalman failed:",e);
-  }
+  source.ops.addCoordinate(millis,lat,long,alt);
+
+  console.log("guess = ",source.ops. predict());
 }
 
 module.exports =

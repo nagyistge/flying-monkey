@@ -1,4 +1,6 @@
-var PythonShell = require('python-shell');
+"use strict";
+
+const PythonShell = require('python-shell');
 
 
 module.exports = function(DB)
