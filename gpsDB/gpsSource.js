@@ -1,7 +1,7 @@
 "use strict";
 
 const julia = require('node-julia');
-const kalman = julia.import('kalman');
+const kalman = julia.import('gpsDB/kalman');
 
 function gpsSource()
 {
@@ -34,8 +34,6 @@ gpsSource.prototype.addCoordinate = function(millis,lat,long,alt)
     }
     else this.samples.push(sample);
     this.state = update(this.model,this.state,sample);
-
-    console.log("updated = ",this.state);
   }
   catch(e)
   {

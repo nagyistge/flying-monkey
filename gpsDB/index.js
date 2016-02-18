@@ -83,6 +83,7 @@ function addGPSCoord(deviceId,deviceName,millis,lat,long,alt)
       gpsCoordinates[deviceId] = source;
   }
 
+  console.log("adding: lat = ",lat,"long = ",long);
   source.ops.addCoordinate(millis,lat,long,alt);
 
   console.log("guess = ",source.ops. predict());

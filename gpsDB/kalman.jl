@@ -22,7 +22,8 @@ function update(model,predictedState,observations)
 end
 
 function predict(model,state)
-   return StateSpace.predict(model,state)
+   predictedState = StateSpace.predict(model,state)
+   return predictedState.
 end
 
 end
