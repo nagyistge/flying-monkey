@@ -2,7 +2,7 @@ module kalman;
 import StateSpace;
 import Distributions;
 
-export newModel,initialGuess,predict,update;
+export newModel,initialGuess,predict,update,extractMeanFromState;
 
 function initialGuess(observationMatrix::Array{Float64,1},varianceMatrix::Array{Float64,1})
    return Distributions.MvNormal(observationMatrix,varianceMatrix)
@@ -22,8 +22,10 @@ function update(model,predictedState,observations)
 end
 
 function predict(model,state)
-   predictedState = StateSpace.predict(model,state)
-   return predictedState.
+   return StateSpace.predict(model,state)
+   return predictedState.µ;
 end
 
+function extractMeanFromState(state)
+   return state.µ;
 end
