@@ -23,9 +23,10 @@ end
 
 function predict(model,state)
    return StateSpace.predict(model,state)
-   return predictedState.µ;
 end
 
 function extractMeanFromState(state)
-   return state.µ;
+   return Distributions.mean(state)
+end
+
 end

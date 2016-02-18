@@ -43,7 +43,7 @@ gpsSource.prototype.addCoordinate = function(millis,lat,long,alt)
 
 gpsSource.prototype.predict = function()
 {
-   return kalman.predict(this.model,this.state);
+   return kalman.extractMeanFromState(kalman.predict(this.model,this.state));
 }
 
 module.exports = 

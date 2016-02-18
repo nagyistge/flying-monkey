@@ -1,6 +1,7 @@
 "use strict";
 
 const gpsSourceFactory = require('./gpsSource');
+const Promise = require('bluebird');
 
 var x = gpsSourceFactory.newSource();
 var gpsCoordinates = {};
@@ -85,8 +86,10 @@ function addGPSCoord(deviceId,deviceName,millis,lat,long,alt)
 
   console.log("adding: lat = ",lat,"long = ",long);
   source.ops.addCoordinate(millis,lat,long,alt);
+  
+  let predictedValue = source.ops.predict();
 
-  console.log("guess = ",source.ops. predict());
+  console.log("predictedValue = ",predictedValue);
 }
 
 module.exports =
