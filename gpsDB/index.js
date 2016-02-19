@@ -12,10 +12,10 @@ function prune()
   var now = new Date();
   var newGPSCoordinates = {};
 
-  for(deviceId in gpsCoordinates)
+  for(id in gpsCoordinates)
   {
     var newSamples = [];
-    var deviceSamples = gpsCoordinates[deviceId].samples;
+    var deviceSamples = gpsCoordinates[id].samples;
 
     for(i = 0;i < deviceSamples.length;i++)
     {
@@ -24,10 +24,10 @@ function prune()
     }
     if(newSamples.length > 0)
     {
-      newGPSCoordinates[deviceId] = {};
-      newGPSCoordinates[deviceId].deviceId = gpsCoordinates[deviceId].deviceId;
-      newGPSCoordinates[deviceId].deviceName = gpsCoordinates[deviceId].deviceName;
-      newGPSCoordinates[deviceId].samples = newSamples;
+      newGPSCoordinates[id] = {};
+      newGPSCoordinates[id].id = gpsCoordinates[id].id;
+      newGPSCoordinates[id].name = gpsCoordinates[id].name;
+      newGPSCoordinates[id].samples = newSamples;
     }
   }
   gpsCoordinates = newGPSCoordinates;
@@ -35,22 +35,22 @@ function prune()
 
 function getFeatureInfo()
 {
-  var key = keyDevice;
-  var center = { lat:0, long:0 };
-  var features = [];
-  var center = { lat:0, long:0 };
+  let key = keyDevice;
+  let center = { lat:0, long:0 };
+  let features = [];
 
-  for(deviceId in gpsCoordinates)
+  for(let id in gpsCoordinates)
   {
-    var deviceInfo = gpsCoordinates[deviceId];
-    var deviceName = deviceInfo.deviceName;
-    var samples = deviceInfo.samples;
+    let deviceInfo = gpsCoordinates[id];
+    let name = deviceInfo.name;
+    let samples = deviceInfo.src.samples;
+    let current = deviceInfo.src.current;
 
-    if(key == null) key = deviceId;
-    if(key == deviceId)
+    if(key == null) key = id;
+    if(key == id)
     {
-       center.lat = samples[0].lat;
-       center.long = samples[0].long;
+       center.lat = current.lat;
+       center.long = current.long;
     }
 
     for(var i = 0;i < samples.length;i++)
@@ -58,7 +58,7 @@ function getFeatureInfo()
       features.push({
         type:"Feature",
         geometry:{ type:"Point", coordinates:[samples[i].long,samples[i].lat] },
-        properties:{ title:deviceName }
+        properties:{ title:name }
       });
     }
   }
@@ -68,29 +68,27 @@ function getFeatureInfo()
 
 //setInterval(prune,500);
 
-function addGPSCoord(deviceId,deviceName,millis,lat,long,alt)
+function addGPSCoord(id,name,millis,lat,long,alt)
 {
-  let source = gpsCoordinates[deviceId];
+  let locus = gpsCoordinates[id];
 
-  if(source == null)
+  if(locus == null)
   {
-      source = 
-      { 
-        deviceId:deviceId,
-        deviceName:deviceName,
-        ops:gpsSourceFactory.newSource()
+      locus =
+      {
+        id:id,
+        name:name,
+        src:gpsSourceFactory.newSource(lat,long)
       };
 
-      gpsCoordinates[deviceId] = source;
+      gpsCoordinates[id] = locus;
   }
 
-  console.log("adding: lat = ",lat,"long = ",long);
-  source.ops.addCoordinate(millis,lat,long,alt);
-  
-  let predictedValue = source.ops.predict();
-
-  console.log("predictedValue = ",predictedValue);
+  locus.src.addCoordinate(millis,lat,long,alt);
+  locus.src.predict().then(function(predictedValue) { locus.src.current = predictedValue; });
 }
+
+addGPSCoord("a","b",0,34,56,78);
 
 module.exports =
 {
@@ -100,6 +98,6 @@ module.exports =
   },
   addGPSCoord: addGPSCoord,
   getKeyDevice: function() { return keyDevice; },
-  getKeyDevice: function(deviceId) { keyDevice = deviceId; },
+  getKeyDevice: function(id) { keyDevice = id; },
   getFeatureInfo: getFeatureInfo
 };
