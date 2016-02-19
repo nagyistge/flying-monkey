@@ -88,8 +88,6 @@ function addGPSCoord(id,name,millis,lat,long,alt)
   locus.src.predict().then(function(predictedValue) { locus.src.current = predictedValue; });
 }
 
-addGPSCoord("a","b",0,34,56,78);
-
 module.exports =
 {
   getGPSCoords: function()
