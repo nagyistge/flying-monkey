@@ -33,17 +33,9 @@ const newModel = Promise.promisify(kalman.newModel);
  * @arg {functiion} callback       function(err,predictedState)
  */
 const predict = Promise.promisify(kalman.predict);
-
 const extractMean = Promise.promisify(kalman.extractMeanFromState);
 const extractVariance = Promise.promisify(kalman.extractVarianceFromState);
-
-const update = Promise.promisify(function(model,state,sample,callback)
-{
-  let predictedState = kalman.predict(model,state);
-  let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
-
-  kalman.update(model,predictedState,observations,function(err,newState) { callback(err,newState); });
-});
+const update = Promise.promisify(kalman.update);
 
 function gpsSource(latitude0,longitude0,altitude0)
 {
@@ -69,7 +61,11 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
       this.samples = [sample];
     }
     else this.samples.push(sample);
-    this.state = yield update(this.model,this.state,sample);
+
+    let predictedState = yield predict(this.model,this.state);
+    let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
+
+    this.state = yield update(this.model,predictedState,observations);
   }
   catch(e)
   {
