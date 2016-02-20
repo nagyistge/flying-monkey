@@ -7,36 +7,10 @@ var x = gpsSourceFactory.newSource();
 var gpsCoordinates = {};
 var keyDevice = null;
 
-function prune()
-{
-  var now = new Date();
-  var newGPSCoordinates = {};
-
-  for(id in gpsCoordinates)
-  {
-    var newSamples = [];
-    var deviceSamples = gpsCoordinates[id].samples;
-
-    for(i = 0;i < deviceSamples.length;i++)
-    {
-      if(now.valueOf() - 5000 < deviceSamples[i].millis) newSamples.push(deviceSamples[i]);
-      else console.log("pruned ",deviceSamples[i]);
-    }
-    if(newSamples.length > 0)
-    {
-      newGPSCoordinates[id] = {};
-      newGPSCoordinates[id].id = gpsCoordinates[id].id;
-      newGPSCoordinates[id].name = gpsCoordinates[id].name;
-      newGPSCoordinates[id].samples = newSamples;
-    }
-  }
-  gpsCoordinates = newGPSCoordinates;
-}
-
 function getFeatureInfo()
 {
   let key = keyDevice;
-  let center = { lat:0, long:0 };
+  let center = { lat:0, long:0, alt:0 };
   let features = [];
 
   for(let id in gpsCoordinates)
@@ -49,24 +23,40 @@ function getFeatureInfo()
     if(key == null) key = id;
     if(key == id)
     {
-       center.lat = current.lat;
-       center.long = current.long;
-    }
+      center.lat = current.lat;
+      center.long = current.long;
+      center.alt = current.alt;
 
-    for(var i = 0;i < samples.length;i++)
-    {
+      for(let i = 0;i < samples.length;i++)
+      {
+        features.push({
+          type:"Feature",
+          geometry:{ type:"Point", coordinates:[samples[i].long,samples[i].lat] },
+          properties:
+          { 
+            title:"gps",
+            "marker-size":"small",
+            "marker-symbol":"circle",
+            "marker-color":"#7FFF00"
+          }
+        });
+      }
       features.push({
         type:"Feature",
-        geometry:{ type:"Point", coordinates:[samples[i].long,samples[i].lat] },
-        properties:{ title:name }
+        geometry:{ type:"Point", coordinates:[current.long,current.lat] },
+        properties:
+        { 
+          title:name,
+          "marker-size":"large",
+          "marker-symbol":"star",
+          "marker-color":"#FFDF00"
+        }
       });
     }
   }
+
   return { features:features, center:center };
 }
-
-
-//setInterval(prune,500);
 
 function addGPSCoord(id,name,millis,lat,long,alt)
 {
@@ -78,7 +68,7 @@ function addGPSCoord(id,name,millis,lat,long,alt)
       {
         id:id,
         name:name,
-        src:gpsSourceFactory.newSource(lat,long)
+        src:gpsSourceFactory.newSource(lat,long,alt)
       };
 
       gpsCoordinates[id] = locus;

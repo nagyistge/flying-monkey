@@ -4,54 +4,53 @@ const julia = require('node-julia');
 const kalman = julia.import('gpsDB/kalman');
 const Promise = require('bluebird');
 
-/***
-*   promisify initialGuess
-*   Args:
-*    initialObservation:  [lat,long]
-*    initialVariance:     [latVar,longVar]
-*    callback:            function(err,predictedState)
+/**
+ * @callback stateCallback
+ * @param {string} err
+ * @param {state} predictedState The next state
+ */
+
+/**
+ * @function initialGuess
+ * @arg {array} initialObservation Array of [lat,long,alt]
+ * @arg {vector} initialVariance: Array of [latVar,longVar,altVar]
+ * @arg {stateCallback} callback
 */
 const initialGuess = Promise.promisify(kalman.initialGuess);
 
-
-/***
-*   promisify newModel
-*   Args:
-*    processVariance:          The model process variance
-*    observationVariance::     The model observation variance
-*    callback:                 function(err,model)
-*/
+/**
+ * @function newModel
+ * @arg processVariance:          The model process variance
+ * @arg observationVariance::     The model observation variance
+ * @ arg callback:                 function(err,model)
+ */
 const newModel = Promise.promisify(kalman.newModel);
 
+/**
+ * @function predict
+ * @arg {model} model The model
+ * @arg {state} state The current state
+ * @arg {functiion} callback       function(err,predictedState)
+ */
+const predict = Promise.promisify(kalman.predict);
 
-/***
-*   promisify predict
-*   Args:
-*    model:          The model
-*    state::         The current state
-*    callback:       function(err,[lat,long])
-*/
-const predict = Promise.promisify(function(model,state,callback)
-{
-  kalman.predict(model,state,function(err,predictedState)
-  {
-     kalman.extractMeanFromState(predictedState,callback);
-  });
-});
+const extractMean = Promise.promisify(kalman.extractMeanFromState);
+const extractVariance = Promise.promisify(kalman.extractVarianceFromState);
 
 const update = Promise.promisify(function(model,state,sample,callback)
 {
   let predictedState = kalman.predict(model,state);
-  let observations = new Float64Array([sample.lat,sample.long]);
+  let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
 
   kalman.update(model,predictedState,observations,function(err,newState) { callback(err,newState); });
 });
 
-function gpsSource(latitude0,longitude0)
+function gpsSource(latitude0,longitude0,altitude0)
 {
   this.samples = [];
   this.latitude0 = latitude0;
   this.longitude0 = longitude0;
+  this.altitude0 = altitude0;
 }
 
 gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,alt)
@@ -62,8 +61,8 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
   {
     if(this.samples.length == 0)
     {
-      let initialObservation = new Float64Array([lat,long]);
-      let initialVariance = new Float64Array([0.01,0.01]);
+      let initialObservation = new Float64Array([lat,long,alt]);
+      let initialVariance = new Float64Array([0.01,0.01,0.01]);
 
       this.state = yield initialGuess(initialObservation,initialVariance);
       this.model = yield newModel(0.01,0.01);
@@ -80,7 +79,7 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
 
 gpsSource.prototype.defaultGPS = function(callback)
 {
-  let res =  { lat:this.latitude0, long:this.longitude0, alt:0 };
+  let res =  { lat:this.latitude0, long:this.longitude0, alt:this.altitude0, latVar:0, longVar:0, altVar:0 };
 
   callback(null,res);
 }
@@ -96,15 +95,36 @@ gpsSource.prototype.predict = Promise.coroutine(function*()
 
   if(this.model != null)
   {
-    let coordArray =yield predict(this.model,this.state);
+    let predictedState = yield predict(this.model,this.state);
+    let coordArray = yield extractMean(predictedState);
+    let varianceArray = yield extractVariance(predictedState);
     
-    res = { lat:coordArray[0], long:coordArray[1], alt:0 };
+    res = { lat:coordArray[0], long:coordArray[1], alt:coordArray[2], latVar:varianceArray[0], longVar:varianceArray[1], altVar:varianceArray[2] };
   }
   else res = yield defaultGPS(this);
   return res;
 });
 
+gpsSource.prototype.prune = function()
+{
+  let now = new Date();
+  let newSamples = [];
+
+  for(let i = 0;i < this.samples.length;i++)
+  {
+    if(now.valueOf() - 5000 < this.samples[i].millis) newSamples.push(this.samples[i]);
+  }
+  this.samples = newSamples;
+}
+
+
 module.exports =
 {
-   newSource: function(latitude0,longitude0) { return new gpsSource(latitude0,longitude0); }
+  newSource: function(latitude0,longitude0,altitude0)
+  { 
+    let source = new gpsSource(latitude0,longitude0,altitude0);
+    
+     setInterval(function() { source.prune(); },500);
+     return source;
+  }
 }
