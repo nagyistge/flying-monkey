@@ -4,8 +4,8 @@ import Distributions;
 
 export newModel,initialGuess,predict,update,extractMeanFromState,extractVarianceFromState;
 
-function initialGuess(observationMatrix::Array{Float64,1},varianceMatrix::Array{Float64,1})
-   return Distributions.MvNormal(observationMatrix,varianceMatrix)
+function initialGuess(observations::Array{Float64,1},varianceEstimate::Array{Float64,1})
+   return Distributions.MvNormal(copy(observations),copy(varianceEstimate))
 end
 
 function newModel(processVariance::Float64,observationVariance::Float64)

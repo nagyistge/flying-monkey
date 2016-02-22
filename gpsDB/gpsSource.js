@@ -43,6 +43,7 @@ function gpsSource(latitude0,longitude0,altitude0)
   this.latitude0 = latitude0;
   this.longitude0 = longitude0;
   this.altitude0 = altitude0;
+  this.initialized = false;
 }
 
 gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,alt)
@@ -51,21 +52,25 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
 
   try
   {
-    if(this.samples.length == 0)
+    if(!this.initialized)
     {
       let initialObservation = new Float64Array([lat,long,alt]);
       let initialVariance = new Float64Array([0.01,0.01,0.01]);
 
       this.state = yield initialGuess(initialObservation,initialVariance);
-      this.model = yield newModel(0.01,0.01);
+      this.model = yield newModel(0.0001,0.01);
       this.samples = [sample];
+      this.initialized = true;
     }
-    else this.samples.push(sample);
+    else
+    {
+      this.samples.push(sample);
 
-    let predictedState = yield predict(this.model,this.state);
-    let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
+      let predictedState = yield predict(this.model,this.state);
+      let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
 
-    this.state = yield update(this.model,predictedState,observations);
+      this.state = yield update(this.model,predictedState,observations);
+    }
   }
   catch(e)
   {
@@ -94,7 +99,7 @@ gpsSource.prototype.predict = Promise.coroutine(function*()
     let predictedState = yield predict(this.model,this.state);
     let coordArray = yield extractMean(predictedState);
     let varianceArray = yield extractVariance(predictedState);
-    
+
     res = { lat:coordArray[0], long:coordArray[1], alt:coordArray[2], latVar:varianceArray[0], longVar:varianceArray[1], altVar:varianceArray[2] };
   }
   else res = yield defaultGPS(this);
@@ -117,9 +122,9 @@ gpsSource.prototype.prune = function()
 module.exports =
 {
   newSource: function(latitude0,longitude0,altitude0)
-  { 
+  {
     let source = new gpsSource(latitude0,longitude0,altitude0);
-    
+
      setInterval(function() { source.prune(); },500);
      return source;
   }

@@ -29,6 +29,7 @@
     "morgan": "~1.6.1",
     "node-julia": "git://github.com/waTeim/node-julia.git",
     "python-shell": "x",
+    "request": "x",
     "serve-favicon": "~2.3.0"
   }
 }
