@@ -18,7 +18,7 @@ function newModel(processVariance::Float64,observationVariance::Float64)
 end
 
 function update(model,predictedState,observations)
-   return StateSpace.update(model,predictedState,observations);
+   return StateSpace.update(model,predictedState,copy(observations));
 end
 
 function predict(model,state)

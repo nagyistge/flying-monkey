@@ -27,25 +27,11 @@ function getFeatureInfo()
       center.long = current.long;
       center.alt = current.alt;
 
-      for(let i = 0;i < samples.length;i++)
-      {
-        features.push({
-          type:"Feature",
-          geometry:{ type:"Point", coordinates:[samples[i].long,samples[i].lat] },
-          properties:
-          { 
-            title:"gps",
-            "marker-size":"small",
-            "marker-symbol":"circle",
-            "marker-color":"#7FFF00"
-          }
-        });
-      }
       features.push({
         type:"Feature",
         geometry:{ type:"Point", coordinates:[current.long,current.lat] },
         properties:
-        { 
+        {
           title:name,
           "marker-size":"large",
           "marker-symbol":"star",
@@ -53,6 +39,34 @@ function getFeatureInfo()
         }
       });
     }
+    else
+    {
+      features.push({
+        type:"Feature",
+        geometry:{ type:"Point", coordinates:[current.long,current.lat] },
+        properties:
+        {
+          title:name,
+          "marker-size":"medium",
+          "marker-symbol":"mobilephone",
+          "marker-color":"#FF1493"
+        }
+      });
+    }
+      for(let i = 0;i < samples.length;i++)
+      {
+        features.push({
+          type:"Feature",
+          geometry:{ type:"Point", coordinates:[samples[i].long,samples[i].lat] },
+          properties:
+          {
+            title:"gps",
+            "marker-size":"small",
+            "marker-symbol":"circle",
+            "marker-color":"#7FFF00"
+          }
+        });
+      }
   }
 
   return { features:features, center:center };
