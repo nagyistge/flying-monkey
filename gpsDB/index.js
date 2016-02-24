@@ -92,6 +92,40 @@ function addGPSCoord(id,name,millis,lat,long,alt)
   locus.src.predict().then(function(predictedValue) { locus.src.current = predictedValue; });
 }
 
+function getIdList()
+{
+  let gpsIdList = [];
+  let i = 0;
+
+  for(let id in gpsCoordinates)
+  {
+    let deviceInfo = gpsCoordinates[id];
+    let name = deviceInfo.name;
+    let current = deviceInfo.src.current;
+
+    gpsIdList[i] = {};
+    gpsIdList[i].id = id;
+    gpsIdList[i].name = name;
+    gpsIdList[i++].current = current;
+  }
+  return gpsIdList;
+}
+
+function getVector(id)
+{
+  var v;
+
+  if(keyDevice != null)
+  {
+    deviceInfo = gpsCoordinates[id];
+    deviceInfo = gpsCoordinates[keyDevice];
+
+    if(keyDevice != null && keyDevice.current != null && deviceInfo != null && deviceInfo.current != null)
+      v = [deviceInfo.current.lat - keyDevice.current.lat,deviceInfo.current.long - keyDevice.current.long,deviceInfo.current.alt - keyDevice.current.alt];
+  }
+  return v;
+}
+
 module.exports =
 {
   getGPSCoords: function()
@@ -100,6 +134,8 @@ module.exports =
   },
   addGPSCoord: addGPSCoord,
   getKeyDevice: function() { return keyDevice; },
-  getKeyDevice: function(id) { keyDevice = id; },
-  getFeatureInfo: getFeatureInfo
+  setKeyDevice: function(id) { keyDevice = id; },
+  getFeatureInfo: getFeatureInfo,
+  getIdList: getIdList,
+  getVector: getVector
 };

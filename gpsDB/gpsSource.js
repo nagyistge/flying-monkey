@@ -58,7 +58,7 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
       let initialVariance = new Float64Array([0.01,0.01,0.01]);
 
       this.state = yield initialGuess(initialObservation,initialVariance);
-      this.model = yield newModel(0.0001,0.01);
+      this.model = yield newModel(0.0001,0.003);
       this.samples = [sample];
       this.initialized = true;
     }
