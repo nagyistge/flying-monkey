@@ -22,11 +22,31 @@ const sendCoord = Promise.promisify(function(url,id,name,millis,lat,long,alt,cal
   });
 });
 
-const send = Promise.coroutine(function*(id,name,lat,long,alt)
+const getList = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'list_ids',
+    json: true
+  },
+  function (err,res,body) {
+    callback(err,body);
+  });
+});
+
+const send = Promise.coroutine(function*(url,id,name,lat,long,alt)
 {
   let now = new Date();
 
-  yield sendCoord("http://localhost:3000/",id,name,now.valueOf(),lat,long,alt);
+  yield sendCoord(url,id,name,now.valueOf(),lat,long,alt);
 });
 
-module.exports = send
+const list = Promise.coroutine(function*(url)
+{
+  return yield getList(url);
+});
+
+module.exports = 
+{
+  send:send,
+  list:list
+};

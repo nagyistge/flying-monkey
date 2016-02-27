@@ -1,44 +1,15 @@
 "use strict";
 
-const Promise = require('bluebird');
-const send = require('./send');
+const gps = require('./gps');
 
-const gpsInaccuracy = 40*8.546351e-6;
-const altitudeInaccuracy = 0.01;
-
-function addNoise(x,inaccuracy)
+function *multiStationary(lat,long,alt)
 {
-  return x + Math.random()*2*inaccuracy - inaccuracy;
-}
-
-function gpsNoise(x)
-{
-  return addNoise(x,gpsInaccuracy);
-}
-
-function altitudeNoise(x)
-{
-  return addNoise(x,altitudeInaccuracy);
-}
-
-const gpsSeries = Promise.promisify(function(count,lat,long,alt,done)
-{
-  function sendPointInSeries()
+  for(;;)
   {
-    let noise = [gpsNoise(lat),gpsNoise(long),altitudeNoise(alt)];
-    let id = Math.round(Math.random()*10);
+    let id = Math.round(Math.random()*9);
 
-
-    console.log("sending: ",noise);
-    send("FF00000000" + id,"phone",noise[0],noise[1],noise[2]);
-    setTimeout(function()
-    {
-      if(--count == 0) done();
-      else sendPointInSeries();
-    },5);
+    yield { id:`FF000000${id}`, name:"phone2", lat:lat, long:long, alt:alt };
   }
+}
 
-  sendPointInSeries();
-});
-
-gpsSeries(0,19.823061,-155.47,5199.888).then(function() { console.log('done'); });
+gps.sendSeries(0,multiStationary(19.823061,-155.47,5199.888)).then(function() { console.log('done'); });

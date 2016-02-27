@@ -53,20 +53,20 @@ function getFeatureInfo()
         }
       });
     }
-      for(let i = 0;i < samples.length;i++)
-      {
-        features.push({
-          type:"Feature",
-          geometry:{ type:"Point", coordinates:[samples[i].long,samples[i].lat] },
-          properties:
-          {
-            title:"gps",
-            "marker-size":"small",
-            "marker-symbol":"circle",
-            "marker-color":"#7FFF00"
-          }
-        });
-      }
+    for(let i = 0;i < samples.length;i++)
+    {
+      features.push({
+        type:"Feature",
+        geometry:{ type:"Point", coordinates:[samples[i].long,samples[i].lat] },
+        properties:
+        {
+          title:"gps",
+          "marker-size":"small",
+          "marker-symbol":"circle",
+          "marker-color":"#7FFF00"
+        }
+      });
+    }
   }
 
   return { features:features, center:center };

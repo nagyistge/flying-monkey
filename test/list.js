@@ -7,4 +7,4 @@ program
   .option('-h, --host [hostname]', 'hostname [localhost]',"localhost")
   .parse(process.argv);
 
-commands.send("http://" + program.host + ":3000/","000000000000","solo",19.823061,-155.469247,5199.888);
+commands.list("http://" + program.host + ":3000/").then(function(idList) { console.log(idList); });
