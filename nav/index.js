@@ -2,6 +2,7 @@
 
 const gpsDB = require('../gpsDB');
 const Promise = require('bluebird');
+const threeDR = require('../3DR');
 
 let parallel = null;
 let reference = null;
@@ -55,6 +56,6 @@ module.exports =
   },
   goto: function()
   {
-    console.log("hello");
+    threeDR.goto();
   }
 }
