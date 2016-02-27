@@ -16,7 +16,7 @@ module.exports = function(DB)
     try
     {
       var coords = JSON.parse(msg);
-      DB.addGPSCoord("000000000000","solo",new Date(),coords.lat,coords.long,coords.alt);
+      DB.addGPSCoord("*","solo",new Date(),coords.lat,coords.long,coords.alt);
     }
     catch(e) {}
   });

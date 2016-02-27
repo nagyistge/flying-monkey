@@ -3,9 +3,10 @@
 const gpsSourceFactory = require('./gpsSource');
 const Promise = require('bluebird');
 
-var x = gpsSourceFactory.newSource();
-var gpsCoordinates = {};
-var keyDevice = null;
+let x = gpsSourceFactory.newSource();
+let gpsCoordinates = {};
+let keyDevice = "*";
+let router = {};
 
 function getFeatureInfo()
 {
@@ -20,7 +21,6 @@ function getFeatureInfo()
     let samples = deviceInfo.src.samples;
     let current = deviceInfo.src.current;
 
-    if(key == null) key = id;
     if(key == id)
     {
       center.lat = current.lat;
@@ -89,12 +89,23 @@ function addGPSCoord(id,name,millis,lat,long,alt)
   }
 
   locus.src.addCoordinate(millis,lat,long,alt);
-  locus.src.predict().then(function(predictedValue) { locus.src.current = predictedValue; });
+  locus.src.predict().then(function(predictedValue)
+  {
+    let previous = locus.src.current;
+
+    locus.src.current = predictedValue;
+    if(router[id] != null)
+    {
+      let routes = router[id];
+
+      for(let i = 0;i < routes.length;i++) routes[i](locus,previous);
+    }
+  });
 }
 
 function getIdList()
 {
-  let gpsIdList = [];
+  let gpsIdList = {};
   let i = 0;
 
   for(let id in gpsCoordinates)
@@ -103,10 +114,10 @@ function getIdList()
     let name = deviceInfo.name;
     let current = deviceInfo.src.current;
 
-    gpsIdList[i] = {};
-    gpsIdList[i].id = id;
-    gpsIdList[i].name = name;
-    gpsIdList[i++].current = current;
+    gpsIdList[id] = {};
+    gpsIdList[id].id = id;
+    gpsIdList[id].name = name;
+    gpsIdList[id].current = current;
   }
   return gpsIdList;
 }
@@ -126,6 +137,12 @@ function getVector(id)
   return v;
 }
 
+function update(id,callback)
+{
+  if(router[id] == null) router[id] = [];
+  router[id].push(callback);
+}
+
 module.exports =
 {
   getGPSCoords: function()
@@ -137,5 +154,6 @@ module.exports =
   setKeyDevice: function(id) { keyDevice = id; },
   getFeatureInfo: getFeatureInfo,
   getIdList: getIdList,
-  getVector: getVector
+  getVector: getVector,
+  update:update
 };

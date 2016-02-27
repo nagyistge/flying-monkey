@@ -118,7 +118,6 @@ gpsSource.prototype.prune = function()
   this.samples = newSamples;
 }
 
-
 module.exports =
 {
   newSource: function(latitude0,longitude0,altitude0)

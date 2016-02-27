@@ -33,6 +33,21 @@ const getList = Promise.promisify(function(url,callback)
   });
 });
 
+const parallelNav = Promise.promisify(function(url,id,callback)
+{
+  request.post({
+    url: url + 'nav/parallel',
+    json: true,
+    body:
+    {
+      deviceId:id
+    }
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const send = Promise.coroutine(function*(url,id,name,lat,long,alt)
 {
   let now = new Date();
@@ -45,8 +60,14 @@ const list = Promise.coroutine(function*(url)
   return yield getList(url);
 });
 
-module.exports = 
+const parallel = Promise.coroutine(function*(url,id)
+{
+  return yield parallelNav(url,id);
+});
+
+module.exports =
 {
   send:send,
-  list:list
+  list:list,
+  parallel:parallel
 };

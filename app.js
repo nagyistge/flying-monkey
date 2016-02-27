@@ -10,6 +10,7 @@ var map = require('./routes/map');
 var logGPS = require('./routes/log_gps');
 var getGPS = require('./routes/get_gps');
 var listIds = require('./routes/list_ids');
+var nav = require('./routes/nav');
 
 var app = express();
 
@@ -31,6 +32,7 @@ app.use('/map', map);
 app.use('/log_gps',logGPS);
 app.use('/get_gps',getGPS);
 app.use('/list_ids',listIds);
+app.use('/nav',nav);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

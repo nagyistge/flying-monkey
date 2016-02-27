@@ -5,6 +5,7 @@ let program = require('commander');
 
 program
   .option('-h, --host [hostname]', 'hostname [localhost]',"localhost")
+  .option('-i, --id [id]', 'id of GPS source []')
   .parse(process.argv);
 
-commands.send("http://" + program.host + ":3000/","*","solo",19.823061,-155.469247,5199.888);
+commands.parallel("http://" + program.host + ":3000/",program.id);
