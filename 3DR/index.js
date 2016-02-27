@@ -28,6 +28,6 @@ module.exports =
 {
   goto:function()
   {
-    shell.send("goto");
+    pyshell.send("goto");
   }
 }
