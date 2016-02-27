@@ -48,6 +48,17 @@ const parallelNav = Promise.promisify(function(url,id,callback)
   });
 });
 
+const gotoNav = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/goto',
+    json: true,
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const send = Promise.coroutine(function*(url,id,name,lat,long,alt)
 {
   let now = new Date();
@@ -65,9 +76,15 @@ const parallel = Promise.coroutine(function*(url,id)
   return yield parallelNav(url,id);
 });
 
+const goto = Promise.coroutine(function*(url,id)
+{
+  return yield gotoNav(url);
+});
+
 module.exports =
 {
   send:send,
   list:list,
-  parallel:parallel
+  parallel:parallel,
+  goto:goto
 };

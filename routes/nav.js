@@ -15,4 +15,11 @@ router.post('/parallel', function(req,res,next)
   else next();
 });
 
+router.post('/goto', function(req,res,next)
+{
+  console.log("body = ",req.body);
+  nav.goto();
+  res.status(200).send('OK');
+});
+
 module.exports = router;

@@ -52,5 +52,9 @@ module.exports =
       reference = null;
       gpsDB.update(id,deviceUpdate);
     }
+  },
+  goto: function()
+  {
+    console.log("hello");
   }
 }
