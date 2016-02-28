@@ -8,7 +8,7 @@ let shell;
 
 const init = Promise.promisify(function(done)
 {
-  shell = new PythonShell('dronekit.py',
+  shell = new PythonShell('droneAPI.py',
   {
     scriptPath:"3DR",
     pythonOptions: ['-u']
@@ -20,7 +20,7 @@ const init = Promise.promisify(function(done)
     {
       let json = JSON.parse(message);
 
-      if(json.gpsCoorde != null)
+      if(json.gpsCoords != null)
       {
         let coords = json.gpsCoords;
 
@@ -32,12 +32,12 @@ const init = Promise.promisify(function(done)
 
   shell.on('error',function(message)
   {
-    console.log("python error:\n\n",msg);
+    console.log("python error:\n\n",message);
   });
   done();
 });
 
-Promise.resolve(init);
+init().then();
 
 module.exports =
 {

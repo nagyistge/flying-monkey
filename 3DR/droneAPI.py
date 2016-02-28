@@ -2,13 +2,13 @@
 
 def gps_callback(self, attr_name, value):
   if value != None:
-     print json.dumps({ 'gpsCoords':{ 'lat':value.lat, 'long':value.lon, 'alt':value.alt }})
+     print(json.dumps({ 'gpsCoords':{ 'lat':value.lat, 'long':value.lon, 'alt':value.alt }}))
 
 def process_command(command,vehicle):
    print(json.dumps({ 'cmd':command }))
    x = command.split();
    if x[0] == "goto":
-      a_location = dronekit.LocationGlobal(x[1],x[2],x[3])
+      a_location = dronekit.LocationGlobal(float(x[1]),float(x[2]),float(x[3]))
       vehicle.simple_goto(a_location)
 
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
