@@ -6,7 +6,6 @@ const router = express.Router();
 
 router.post('/parallel', function(req,res,next)
 {
-  console.log("body = ",req.body);
   if(req.body.deviceId != null)
   {
     nav.parallel(req.body.deviceId);
@@ -17,7 +16,6 @@ router.post('/parallel', function(req,res,next)
 
 router.post('/goto', function(req,res,next)
 {
-  console.log("body = ",req.body);
   nav.goto();
   res.status(200).send('OK');
 });

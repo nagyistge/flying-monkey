@@ -2,13 +2,12 @@
 
 def gps_callback(self, attr_name, value):
   if value != None:
-     print json.dumps({ 'lat':value.lat, 'long':value.lon, 'alt':value.alt })
+     print json.dumps({ 'gpsCoords':{ 'lat':value.lat, 'long':value.lon, 'alt':value.alt }})
 
 def process_command(command,vehicle):
    print(json.dumps({ 'cmd':command }))
    x = command.split();
    if x[0] == "goto":
-      print("coords = ",x[1],x[2],x[3]);
       a_location = dronekit.LocationGlobal(x[1],x[2],x[3])
       vehicle.simple_goto(a_location)
 

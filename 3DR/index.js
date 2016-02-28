@@ -1,35 +1,51 @@
 "use strict";
 
 const PythonShell = require('python-shell');
+const Promise = require('bluebird');
 const gpsDB = require('../gpsDB');
 
-var pyshell = new PythonShell('collect_gps.py',
-{
-  scriptPath:"3DR",
-  pythonOptions: ['-u']
-});
+let shell;
 
-pyshell.on('message',function (msg)
+const init = Promise.promisify(function(done)
 {
-console.log(msg);
-  try
+  shell = new PythonShell('dronekit.py',
   {
-    var coords = JSON.parse(msg);
-    gpsDB.addGPSCoord("*","solo",new Date(),coords.lat,coords.long,coords.alt);
-  }
-  catch(e) {}
+    scriptPath:"3DR",
+    pythonOptions: ['-u']
+  });
+
+  shell.on('message',function(message)
+  {
+    try
+    {
+      let json = JSON.parse(message);
+
+      if(json.gpsCoorde != null)
+      {
+        let coords = json.gpsCoords;
+
+        gpsDB.addGPSCoord("*","solo",new Date(),coords.lat,coords.long,coords.alt);
+      }
+    }
+    catch(e) {}
+  });
+
+  shell.on('error',function(message)
+  {
+    console.log("python error:\n\n",msg);
+  });
+  done();
 });
 
-pyshell.on('error',function(msg)
-{
-  console.log("error = ",msg);
-});
+Promise.resolve(init);
 
 module.exports =
 {
   goto:function(lat,long,alt)
   {
-    console.log("sending goto");
-    pyshell.send(`goto ${lat} ${long} ${alt}`);
+    if(shell != null)
+    {
+      shell.send(`goto ${lat} ${long} ${alt}`);
+    }
   }
 }

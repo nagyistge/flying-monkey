@@ -56,9 +56,10 @@ module.exports =
   {
     if(parallel != null)
     {
-       let target = gpsDB.getLocus(parallel);
-       let home = gpsDB.getLocus('*');
+       let target = gpsDB.getLoc('x');
+       let home = gpsDB.getLoc('*');
 
+       console.log("goto: " + `(${target.src.current.lat},${target.src.current.long},${home.src.current.alt})`);
        threeDR.goto(target.src.current.lat,target.src.current.long,home.src.current.alt);
     }
   }
