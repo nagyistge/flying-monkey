@@ -11,6 +11,7 @@ var pyshell = new PythonShell('collect_gps.py',
 
 pyshell.on('message',function (msg)
 {
+console.log(msg);
   try
   {
     var coords = JSON.parse(msg);
@@ -26,8 +27,9 @@ pyshell.on('error',function(msg)
 
 module.exports =
 {
-  goto:function()
+  goto:function(lat,long,alt)
   {
-    pyshell.send("goto");
+    console.log("sending goto");
+    pyshell.send(`goto ${lat} ${long} ${alt}`);
   }
 }

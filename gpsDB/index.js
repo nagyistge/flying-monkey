@@ -143,6 +143,11 @@ function update(id,callback)
   router[id].push(callback);
 }
 
+function getLocus(id)
+{
+   return gpsCoordinates[id];
+}
+
 module.exports =
 {
   getGPSCoords: function()
@@ -155,5 +160,6 @@ module.exports =
   getFeatureInfo: getFeatureInfo,
   getIdList: getIdList,
   getVector: getVector,
-  update:update
+  update:update,
+  getLocus:getLocus
 };

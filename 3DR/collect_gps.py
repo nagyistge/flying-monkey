@@ -1,18 +1,27 @@
 #!/usr/bin/env python
 
 def gps_callback(self, attr_name, value):
-   if value != None:
-      print json.dumps({ 'lat':value.lat, 'long':value.lon, 'alt':value.alt })
+  if value != None:
+     print json.dumps({ 'lat':value.lat, 'long':value.lon, 'alt':value.alt })
 
-def process_command(command):
-    print(command)
+def process_command(command,vehicle):
+   print(json.dumps({ 'cmd':command }))
+   x = command.split();
+   if x[0] == "goto":
+      print("coords = ",x[1],x[2],x[3]);
+      a_location = dronekit.LocationGlobal(x[1],x[2],x[3])
+      vehicle.simple_goto(a_location)
 
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
 def main():
    target = "udpin:0.0.0.0:14550"
    vehicle = dronekit.connect(target,wait_ready=True)
    vehicle.add_attribute_listener('location.global_frame', gps_callback)
-   for line in sys.stdin: process_command(line)
+   while 1:
+      line = ""
+      for c in raw_input():
+         line = line + c
+      process_command(line,vehicle)
    vehicle.close()
 
 try:

@@ -10,13 +10,11 @@ let home = null;
 
 gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
 {
-  console.log("home update");
   home = gpsObj;
 }));
 
 const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
 {
-  console.log("got a device update for id ",gpsObj.id);
   if(home != null && parallel != null && parallel == gpsObj.id)
   {
     let now = new Date();
@@ -30,7 +28,7 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
         vector:[home.src.current.lat - gpsObj.src.current.lat,home.src.current.long - gpsObj.src.current.long,home.src.current.alt - gpsObj.src.current.alt]
       };
 
-      gpsDB.addGPSCoord("x","target",node.valueOf(),home.src.current.lat,home.src.current.long,home.src.current.alt);
+      gpsDB.addGPSCoord("x","target",now.valueOf(),home.src.current.lat,home.src.current.long,home.src.current.alt);
     }
     else
     {
@@ -56,6 +54,12 @@ module.exports =
   },
   goto: function()
   {
-    threeDR.goto();
+    if(parallel != null)
+    {
+       let target = gpsDB.getLocus(parallel);
+       let home = gpsDB.getLocus('*');
+
+       threeDR.goto(target.src.current.lat,target.src.current.long,home.src.current.alt);
+    }
   }
 }
