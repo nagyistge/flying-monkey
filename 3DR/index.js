@@ -20,6 +20,7 @@ const init = Promise.promisify(function(done)
     {
       let json = JSON.parse(message);
 
+      console.log(json);
       if(json.gpsCoords != null)
       {
         let coords = json.gpsCoords;
@@ -43,9 +44,14 @@ module.exports =
 {
   goto:function(lat,long,alt)
   {
-    if(shell != null)
-    {
-      shell.send(`goto ${lat} ${long} ${alt}`);
-    }
+    if(shell != null) shell.send(`goto ${lat} ${long} ${alt}`);
+  },
+  isArmed:function()
+  {
+    if(shell != null) shell.send("isArmed");
+  },
+  rtl:function()
+  {
+    if(shell != null) shell.send("rtl");
   }
 }

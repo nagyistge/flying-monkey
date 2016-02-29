@@ -20,4 +20,10 @@ router.post('/goto', function(req,res,next)
   res.status(200).send('OK');
 });
 
+router.post('/rtl', function(req,res,next)
+{
+  nav.rtl();
+  res.status(200).send('OK');
+});
+
 module.exports = router;

@@ -60,7 +60,12 @@ module.exports =
        let home = gpsDB.getLoc('*');
 
        console.log("goto: " + `(${target.src.current.lat},${target.src.current.long},${home.src.current.alt})`);
+       threeDR.isArmed();
        threeDR.goto(target.src.current.lat,target.src.current.long,home.src.current.alt);
     }
+  },
+  rtl: function()
+  {
+     threeDR.rtl();
   }
 }
