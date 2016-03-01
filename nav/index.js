@@ -41,9 +41,30 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
   }
 });
 
+const gotoTarget = Promise.coroutine(function *()
+{
+  let target = gpsDB.getLoc('x');
+
+  if(target && target.src.current && threeDR.isArmed())
+  {
+    let modeName = threeDR.modeName();
+
+    if(modeName != "RTL")
+    {
+      if(modeName != "GUIDED")
+      {
+        threeDR.guided();
+        yield threeDR.waitForMode("GUIDED");
+      }
+      console.log("goto: " + `(${target.src.current.lat},${target.src.current.long},${home.src.current.alt})`);
+      threeDR.goto(target.src.current.lat,target.src.current.long,home.src.current.alt);
+    }
+  }
+});
+
 module.exports =
 {
-  parallel:function(id)
+  parallel: function(id)
   {
     if(parallel != id)
     {
@@ -52,18 +73,7 @@ module.exports =
       gpsDB.update(id,deviceUpdate);
     }
   },
-  goto: function()
-  {
-    if(parallel != null)
-    {
-       let target = gpsDB.getLoc('x');
-       let home = gpsDB.getLoc('*');
-
-       console.log("goto: " + `(${target.src.current.lat},${target.src.current.long},${home.src.current.alt})`);
-       threeDR.isArmed();
-       threeDR.goto(target.src.current.lat,target.src.current.long,home.src.current.alt);
-    }
-  },
+  gotoTarget: gotoTarget,
   rtl: function()
   {
      threeDR.rtl();

@@ -59,6 +59,17 @@ const gotoNav = Promise.promisify(function(url,callback)
   });
 });
 
+const rtlNav = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/rtl',
+    json: true,
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const send = Promise.coroutine(function*(url,id,name,lat,long,alt)
 {
   let now = new Date();
@@ -76,9 +87,14 @@ const parallel = Promise.coroutine(function*(url,id)
   return yield parallelNav(url,id);
 });
 
-const goto = Promise.coroutine(function*(url,id)
+const goto = Promise.coroutine(function*(url)
 {
   return yield gotoNav(url);
+});
+
+const rtl = Promise.coroutine(function*(url)
+{
+  return yield rtlNav(url);
 });
 
 module.exports =
@@ -86,5 +102,6 @@ module.exports =
   send:send,
   list:list,
   parallel:parallel,
-  goto:goto
+  goto:goto,
+  rtl:rtl
 };

@@ -4,7 +4,15 @@ const PythonShell = require('python-shell');
 const Promise = require('bluebird');
 const gpsDB = require('../gpsDB');
 
+let router =
+{
+  RTL: [],
+  GUIDED: []
+}
+
 let shell;
+let isArmed = false;
+let modeName = null;
 
 const init = Promise.promisify(function(done)
 {
@@ -27,6 +35,19 @@ const init = Promise.promisify(function(done)
 
         gpsDB.addGPSCoord("*","solo",new Date(),coords.lat,coords.long,coords.alt);
       }
+      else if(json.modeName != null)
+      {
+        modeName = json.modeName;
+
+        let callbackList = router[modeName];
+
+        if(callbackList != null)
+        {
+          router[modeName] = [];
+          for(let i = 0;i < callbackList.length;i++) callbackList[i]();
+        }
+      }
+      else if(json.isArmed != null) isArmed = json.isArmed;
     }
     catch(e) {}
   });
@@ -40,18 +61,38 @@ const init = Promise.promisify(function(done)
 
 init().then();
 
+const waitForMode = Promise.promisify(function(targetModeName,done)
+{
+  if(shell != null)
+  {
+    if(modeName == targetModeName) done();
+    else
+    {
+      let list router[targetModeName];
+
+      if(list != null) list.push(done);
+    }
+  }
+});
+
 module.exports =
 {
   goto:function(lat,long,alt)
   {
-    if(shell != null) shell.send(`goto ${lat} ${long} ${alt}`);
+    if(shell != null && isArmed) shell.send(`goto ${lat} ${long} ${alt}`);
   },
-  isArmed:function()
-  {
-    if(shell != null) shell.send("isArmed");
-  },
+  isArmed:function() { return isArmed; },
+  modeName:function() { return modeName; },
   rtl:function()
   {
-    if(shell != null) shell.send("rtl");
+    if(shell != null && isArmed) shell.send("rtl");
+  },
+  guided:function()
+  {
+    if(shell != null && isArmed) shell.send("guided");
+  },
+  waitForMode: function(targetModeName)
+  {
+    if(shell != null) return waitForMode(targetModeName);
   }
 }
