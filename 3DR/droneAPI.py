@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-def attr_callback(self,attr_name,value):
+def attribute_callback(self,attr_name,value):
   if value != None:
      if attr_name == 'location.global_frame':
         print(json.dumps({ 'gpsCoords':{ 'lat':value.lat, 'long':value.lon, 'alt':value.alt }}))
