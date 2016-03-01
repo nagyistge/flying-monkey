@@ -28,7 +28,6 @@ const init = Promise.promisify(function(done)
     {
       let json = JSON.parse(message);
 
-      console.log(json);
       if(json.gpsCoords != null)
       {
         let coords = json.gpsCoords;
