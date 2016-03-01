@@ -38,6 +38,7 @@ const init = Promise.promisify(function(done)
       {
         modeName = json.modeName;
 
+        console.log("modeName updateed to: ",modeName);
         let callbackList = router[modeName];
 
         if(callbackList != null)
@@ -46,7 +47,11 @@ const init = Promise.promisify(function(done)
           for(let i = 0;i < callbackList.length;i++) callbackList[i]();
         }
       }
-      else if(json.isArmed != null) isArmed = json.isArmed;
+      else if(json.isArmed != null)
+      {
+        isArmed = json.isArmed;
+        console.log("isArmed updateed to: ",isArmed);
+      }
     }
     catch(e) {}
   });
@@ -67,7 +72,7 @@ const waitForMode = Promise.promisify(function(targetModeName,done)
     if(modeName == targetModeName) done();
     else
     {
-      let list = router[targetModeName];
+      let callbackList = router[targetModeName];
 
       if(list != null) list.push(done);
     }
@@ -76,9 +81,9 @@ const waitForMode = Promise.promisify(function(targetModeName,done)
 
 module.exports =
 {
-  goto:function(lat,long,alt)
+  goto:function(lat,long,alt,speed)
   {
-    if(shell != null && isArmed) shell.send(`goto ${lat} ${long} ${alt}`);
+    if(shell != null && isArmed) shell.send(`goto ${lat} ${long} ${alt} ${speed}`);
   },
   isArmed:function() { return isArmed; },
   modeName:function() { return modeName; },

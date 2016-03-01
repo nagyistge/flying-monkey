@@ -7,6 +7,7 @@ const threeDR = require('../3DR');
 let parallel = null;
 let reference = null;
 let home = null;
+let isTracking = false;
 
 gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
 {
@@ -21,7 +22,6 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
 
     if(reference == null)
     {
-      console.log(home);
       reference =
       {
         src:gpsObj,
@@ -37,11 +37,12 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
       let translatedAlt = gpsObj.src.current.alt + reference.vector[2];
 
       gpsDB.addGPSCoord("x","target",now.valueOf(),translatedLat,translatedLong,translatedAlt);
+      if(isTracking) gotoTarget();
     }
   }
 });
 
-const gotoTarget = Promise.coroutine(function *()
+const gotoTarget = Promise.coroutine(function *(track)
 {
   let target = gpsDB.getLoc('x');
 
@@ -56,8 +57,9 @@ const gotoTarget = Promise.coroutine(function *()
         threeDR.guided();
         yield threeDR.waitForMode("GUIDED");
       }
-      console.log("goto: " + `(${target.src.current.lat},${target.src.current.long},${home.src.current.alt})`);
-      threeDR.goto(target.src.current.lat,target.src.current.long,home.src.current.alt);
+      console.log("goto: " + `(${target.src.current.lat},${target.src.current.long},${home.src.current.alt}) 2.0`);
+      if(track) isTracking = true;
+      threeDR.goto(target.src.current.lat,target.src.current.long,home.src.current.alt,2.0);
     }
   }
 });
@@ -73,9 +75,7 @@ module.exports =
       gpsDB.update(id,deviceUpdate);
     }
   },
-  gotoTarget: gotoTarget,
-  rtl: function()
-  {
-     threeDR.rtl();
-  }
+  goto: function() { gotoTarget(false); },
+  track: function() { gotoTarget(true); },
+  rtl: function() { threeDR.rtl(); }
 }
