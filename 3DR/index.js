@@ -8,7 +8,7 @@ let router =
 {
   RTL: [],
   GUIDED: []
-}
+};
 
 let shell;
 let isArmed = false;
@@ -68,7 +68,7 @@ const waitForMode = Promise.promisify(function(targetModeName,done)
     if(modeName == targetModeName) done();
     else
     {
-      let list router[targetModeName];
+      let list = router[targetModeName];
 
       if(list != null) list.push(done);
     }

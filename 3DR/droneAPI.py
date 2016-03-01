@@ -4,10 +4,8 @@ def attr_callback(self,attr_name,value):
   if value != None:
      if attr_name == 'location.global_frame':
         print(json.dumps({ 'gpsCoords':{ 'lat':value.lat, 'long':value.lon, 'alt':value.alt }}))
-     elif attr_name == 'mode.name';
-        print(json.dumps({ 'modeName':value }))
-     elif attr_name == 'armed';
-        print(json.dumps({ 'isArmed':value }))
+     elif attr_name == 'mode.name': print(json.dumps({ 'modeName':value }))
+     elif attr_name == 'armed': print(json.dumps({ 'isArmed':value }))
 
 def process_command(command,vehicle):
    x = command.split();
