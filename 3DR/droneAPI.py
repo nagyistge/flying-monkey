@@ -18,10 +18,10 @@ def process_command(command,vehicle):
       if vehicle.mode.name != "GUIDED": vehicle.mode = dronekit.VehicleMode("GUIDED")
       a_location = dronekit.LocationGlobal(coord_lat,coord_long,coord_alt)
       vehicle.simple_goto(a_location,groundspeed=2.0)
-  elif x[0] == "guided":
+   elif x[0] == "guided":
       vehicle.mode = dronekit.VehicleMode("GUIDED")
       print(json.dumps({ 'cmd':'guided' }))
-  elif x[0] == "rtl":
+   elif x[0] == "rtl":
       vehicle.mode = dronekit.VehicleMode("RTL")
       print(json.dumps({ 'cmd':'rtl' }))
 
