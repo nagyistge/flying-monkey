@@ -4,7 +4,7 @@ def attribute_callback(self,attr_name,value):
   if value != None:
      if attr_name == 'location.global_frame':
         print(json.dumps({ 'gpsCoords':{ 'lat':value.lat, 'long':value.lon, 'alt':value.alt }}))
-     elif attr_name == 'mode.name': print(json.dumps({ 'modeName':value }))
+     elif attr_name == 'mode': print(json.dumps({ 'modeName':value.name }))
      elif attr_name == 'armed': print(json.dumps({ 'isArmed':value }))
 
 def process_command(command,vehicle):
@@ -24,6 +24,8 @@ def process_command(command,vehicle):
    elif x[0] == "rtl":
       vehicle.mode = dronekit.VehicleMode("RTL")
       print(json.dumps({ 'cmd':'rtl' }))
+   elif x[0] == "mode":
+      print(json.dumps({ 'modeName':vehicle.mode.name }))
 
 
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
@@ -31,7 +33,7 @@ def main():
    target = "udpin:0.0.0.0:14550"
    vehicle = dronekit.connect(target,wait_ready=True)
    vehicle.add_attribute_listener('location.global_frame',attribute_callback)
-   vehicle.add_attribute_listener('mode.name',attribute_callback)
+   vehicle.add_attribute_listener('mode',attribute_callback)
    vehicle.add_attribute_listener('armed',attribute_callback)
    while 1:
       line = ""

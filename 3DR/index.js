@@ -63,7 +63,7 @@ const init = Promise.promisify(function(done)
   done();
 });
 
-init().then();
+init().then(function() { shell.send("mode"); });
 
 const waitForMode = Promise.promisify(function(targetModeName,done)
 {
@@ -74,7 +74,7 @@ const waitForMode = Promise.promisify(function(targetModeName,done)
     {
       let callbackList = router[targetModeName];
 
-      if(list != null) list.push(done);
+      if(callbackList = null) callbackList.push(done);
     }
   }
 });
