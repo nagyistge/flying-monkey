@@ -1,4 +1,3 @@
-__precompile__()
 module kalman;
 import StateSpace;
 import Distributions;

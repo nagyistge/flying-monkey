@@ -1,41 +1,7 @@
 "use strict";
 
-const julia = require('node-julia');
-const kalman = julia.import('gpsDB/kalman');
 const Promise = require('bluebird');
-
-/**
- * @callback stateCallback
- * @param {string} err
- * @param {state} predictedState The next state
- */
-
-/**
- * @function initialGuess
- * @arg {array} initialObservation Array of [lat,long,alt]
- * @arg {vector} initialVariance: Array of [latVar,longVar,altVar]
- * @arg {stateCallback} callback
-*/
-const initialGuess = Promise.promisify(kalman.initialGuess);
-
-/**
- * @function newModel
- * @arg processVariance:          The model process variance
- * @arg observationVariance::     The model observation variance
- * @ arg callback:                 function(err,model)
- */
-const newModel = Promise.promisify(kalman.newModel);
-
-/**
- * @function predict
- * @arg {model} model The model
- * @arg {state} state The current state
- * @arg {functiion} callback       function(err,predictedState)
- */
-const predict = Promise.promisify(kalman.predict);
-const extractMean = Promise.promisify(kalman.extractMeanFromState);
-const extractVariance = Promise.promisify(kalman.extractVarianceFromState);
-const update = Promise.promisify(kalman.update);
+const engine = require('../numerics');
 
 function gpsSource(latitude0,longitude0,altitude0)
 {
@@ -57,8 +23,8 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
       let initialObservation = new Float64Array([lat,long,alt]);
       let initialVariance = new Float64Array([0.01,0.01,0.01]);
 
-      this.state = yield initialGuess(initialObservation,initialVariance);
-      this.model = yield newModel(0.0001,0.003);
+      this.state = yield engine.kalmanInitialGuess(initialObservation,initialVariance);
+      this.model = yield engine.kalmanNewModel(0.0001,0.003);
       this.samples = [sample];
       this.initialized = true;
     }
@@ -66,10 +32,10 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
     {
       this.samples.push(sample);
 
-      let predictedState = yield predict(this.model,this.state);
+      let predictedState = yield engine.kalmanPredict(this.model,this.state);
       let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
 
-      this.state = yield update(this.model,predictedState,observations);
+      this.state = yield engine.kalmanUpdate(this.model,predictedState,observations);
     }
   }
   catch(e)
@@ -96,9 +62,9 @@ gpsSource.prototype.predict = Promise.coroutine(function*()
 
   if(this.model != null)
   {
-    let predictedState = yield predict(this.model,this.state);
-    let coordArray = yield extractMean(predictedState);
-    let varianceArray = yield extractVariance(predictedState);
+    let predictedState = yield engine.kalmanPredict(this.model,this.state);
+    let coordArray = yield engine.kalmanStateMean(predictedState);
+    let varianceArray = yield engine.kalmanStateVariance(predictedState);
 
     res = { lat:coordArray[0], long:coordArray[1], alt:coordArray[2], latVar:varianceArray[0], longVar:varianceArray[1], altVar:varianceArray[2] };
   }
