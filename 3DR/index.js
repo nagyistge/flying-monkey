@@ -69,12 +69,16 @@ const waitForMode = Promise.promisify(function(targetModeName,done)
 {
   if(shell != null)
   {
-    if(modeName == targetModeName) done();
+    if(modeName == targetModeName)
+    {
+console.log("is already in mode: ",targetModeName);
+       done();
+    }
     else
     {
       let callbackList = router[targetModeName];
 
-      if(callbackList = null) callbackList.push(done);
+      if(callbackList != null) callbackList.push(done);
     }
   }
 });

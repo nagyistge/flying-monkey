@@ -52,7 +52,7 @@ const gotoNav = Promise.promisify(function(url,callback)
 {
   request.post({
     url: url + 'nav/goto',
-    json: true,
+    json: true
   },
   function (err,res,body) {
     callback(err);
@@ -63,7 +63,18 @@ const rtlNav = Promise.promisify(function(url,callback)
 {
   request.post({
     url: url + 'nav/rtl',
-    json: true,
+    json: true
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
+const trackNav = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/track',
+    json: true
   },
   function (err,res,body) {
     callback(err);
@@ -99,9 +110,10 @@ const rtl = Promise.coroutine(function*(url)
 
 module.exports =
 {
-  send:send,
+  goto:goto,
   list:list,
   parallel:parallel,
-  goto:goto,
-  rtl:rtl
+  rtl:rtl,
+  send:send,
+  track:track
 };
