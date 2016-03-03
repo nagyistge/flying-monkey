@@ -1,8 +1,9 @@
 "use strict";
 
 const julia = require('node-julia');
-const kalman = julia.import('./numerics/kalman');
 const Promise = require('bluebird');
+const kalman = julia.import('./numerics/kalman');
+const formulas = julia.import('./numerics/formulas');
 
 /**
  * @callback stateCallback
@@ -38,5 +39,6 @@ module.exports =
   kalmanPredict: Promise.promisify(kalman.predict),
   kalmanStateMean: Promise.promisify(kalman.extractMeanFromState),
   kalmanStateVariance: Promise.promisify(kalman.extractVarianceFromState),
-  kalmanUpdate: Promise.promisify(kalman.update)
+  kalmanUpdate: Promise.promisify(kalman.update),
+  haversine: Promise.promisify(formulas.haversine)
 }

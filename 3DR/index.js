@@ -63,7 +63,14 @@ const init = Promise.promisify(function(done)
   done();
 });
 
-init().then(function() { shell.send("mode"); });
+init().then(function()
+{ 
+  try
+  {
+    if(shell != null) shell.send("mode");
+  }
+  catch(e) { shell = null; }
+});
 
 const waitForMode = Promise.promisify(function(targetModeName,done)
 {

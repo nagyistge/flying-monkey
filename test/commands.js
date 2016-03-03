@@ -108,6 +108,11 @@ const rtl = Promise.coroutine(function*(url)
   return yield rtlNav(url);
 });
 
+const track = Promise.coroutine(function*(url)
+{
+  return yield trackNav(url);
+});
+
 module.exports =
 {
   goto:goto,
