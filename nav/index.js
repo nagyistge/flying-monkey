@@ -14,11 +14,7 @@ gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
 {
   home = gpsObj;
 
-
-  if(isTracking)
-  {
-    let target = threeDR.getLoc("x");
-  }
+  if(isTracking) yield setVelocity();
 }));
 
 const setVelocity = Promise.coroutine(function *()
