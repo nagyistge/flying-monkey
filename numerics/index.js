@@ -40,5 +40,6 @@ module.exports =
   kalmanStateMean: Promise.promisify(kalman.extractMeanFromState),
   kalmanStateVariance: Promise.promisify(kalman.extractVarianceFromState),
   kalmanUpdate: Promise.promisify(kalman.update),
-  haversine: Promise.promisify(formulas.haversine)
+  haversine: Promise.promisify(formulas.haversine),
+  forwardAzmuth:  Promise.promisify(formulas.forwardAzmuth)
 }

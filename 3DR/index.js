@@ -64,7 +64,7 @@ const init = Promise.promisify(function(done)
 });
 
 init().then(function()
-{ 
+{
   try
   {
     if(shell != null) shell.send("mode");
@@ -76,11 +76,7 @@ const waitForMode = Promise.promisify(function(targetModeName,done)
 {
   if(shell != null)
   {
-    if(modeName == targetModeName)
-    {
-console.log("is already in mode: ",targetModeName);
-       done();
-    }
+    if(modeName == targetModeName) done();
     else
     {
       let callbackList = router[targetModeName];
@@ -96,15 +92,19 @@ module.exports =
   {
     if(shell != null && isArmed) shell.send(`goto ${lat} ${long} ${alt} ${speed}`);
   },
+  guided:function()
+  {
+    if(shell != null && isArmed) shell.send("guided");
+  },
   isArmed:function() { return isArmed; },
   modeName:function() { return modeName; },
   rtl:function()
   {
     if(shell != null && isArmed) shell.send("rtl");
   },
-  guided:function()
+  setVelocity:function(vx,vy,vz)
   {
-    if(shell != null && isArmed) shell.send("guided");
+    if(shell != null && isArmed) shell.send(`setVelocity ${vx} ${vy} ${vz}`);
   },
   waitForMode: function(targetModeName)
   {

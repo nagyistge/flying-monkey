@@ -7,6 +7,10 @@ def attribute_callback(self,attr_name,value):
      elif attr_name == 'mode': print(json.dumps({ 'modeName':value.name }))
      elif attr_name == 'armed': print(json.dumps({ 'isArmed':value }))
 
+def send_ned_velocity(vehicle,vx,vy,vz):
+   msg = vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,mavlink.MAV_FRAME_LOCAL_NED,0b0000111111000111,0,0,0,vx,vy,vz,0,0,0,0,0)
+   vehicle.send_mavlink(msg)
+
 def process_command(command,vehicle):
    x = command.split();
    if x[0] == "goto":
@@ -26,6 +30,14 @@ def process_command(command,vehicle):
       print(json.dumps({ 'cmd':'rtl' }))
    elif x[0] == "mode":
       print(json.dumps({ 'modeName':vehicle.mode.name }))
+   elif x[0] == "setVelocity":
+      vx = float(x[1])
+      vy = float(x[2])
+      vz = float(x[3])
+      cmd_str = "velocity " + str(vx) + " " + str(vy) + " " + str(vz)
+      print(json.dumps({ 'cmd':cmd_str }))
+      send_ned_velocity(vehicle,vx,vy,vz)
+
 
 
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
