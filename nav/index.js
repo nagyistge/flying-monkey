@@ -21,9 +21,11 @@ gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
   }
 }));
 
-const setVelocity = Promise.coroutine(function *(from,to)
+const setVelocity = Promise.coroutine(function *()
 {
-  if(target && target.src.current && threeDR.isArmed())
+  let target = gpsDB.getLoc('x');
+
+  if(target && target.src.current && home && home.src.current && threeDR.isArmed())
   {
     let forwardAzmuth = yield numerics.forwardAzmuth(from.lat,from.long,to.lat,to.long);
     let distance = yield numerics.haversine(from.lat,from.long,to.lat,to.long);
@@ -46,6 +48,7 @@ const setVelocity = Promise.coroutine(function *(from,to)
       console.log("setVelocity: " + `${vx} ${vy} ${0}`);
       threeDR.setVelocity(vx,vy,0);
     }
+  }
 });
 
 const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
