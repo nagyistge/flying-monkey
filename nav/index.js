@@ -23,12 +23,14 @@ const setVelocity = Promise.coroutine(function *()
 
   if(target && target.src.current && home && home.src.current && threeDR.isArmed())
   {
+    let from = home.src.current;
+    let to = target.src.current;
     let forwardAzmuth = yield numerics.forwardAzmuth(from.lat,from.long,to.lat,to.long);
     let distance = yield numerics.haversine(from.lat,from.long,to.lat,to.long);
     let speed = (distance*distance)/9;
 
-    if(distance <= 2) speed = 1;
-    if(speed > 5) speed = 5;
+    if(distance <= 2 && speed > 1) speed = 1;
+    if(speed > 2) speed = 2;
 
     let vx = Math.cos(forwardAzmuth)*speed;
     let vy = Math.sin(forwardAzmuth)*speed;
