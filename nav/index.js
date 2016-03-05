@@ -40,11 +40,19 @@ const setVelocity = Promise.coroutine(function *()
     {
       if(modeName != "GUIDED")
       {
-        threeDR.guided();
-        yield threeDR.waitForMode("GUIDED");
+        if(modePending == null)
+        {
+          modePending = 'guided';
+          threeDR.guided();
+          yield threeDR.waitForMode("GUIDED");
+          modePending = null;
+        }
       }
-      console.log("setVelocity: " + `${vx} ${vy} ${0}`);
-      threeDR.setVelocity(vx,vy,0);
+      else
+      {
+        console.log("setVelocity: " + `${vx} ${vy} ${0}`);
+        threeDR.setVelocity(vx,vy,0);
+      }
     }
   }
 });

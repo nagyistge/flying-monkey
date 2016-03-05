@@ -8,8 +8,11 @@ def attribute_callback(self,attr_name,value):
      elif attr_name == 'armed': print(json.dumps({ 'isArmed':value }))
 
 def send_ned_velocity(vehicle,vx,vy,vz):
+   print(json.dumps({ 'dbg':"about to  encode message" }))
    msg = vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,mavlink.MAV_FRAME_LOCAL_NED,0b0000111111000111,0,0,0,vx,vy,vz,0,0,0,0,0)
+   print(json.dumps({ 'dbg':"encoded message" }))
    vehicle.send_mavlink(msg)
+   print(json.dumps({ 'dbg':"sent message" }))
 
 def process_command(command,vehicle):
    x = command.split();
