@@ -145,7 +145,6 @@ function update(id,callback)
 
 function getLoc(id)
 {
-  console.log(`getting loc for ${id}`);
   return gpsCoordinates[id];
 }
 

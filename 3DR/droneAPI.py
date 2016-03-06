@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+FRAME_LOCAL_NED = 1
+
 def attribute_callback(self,attr_name,value):
   if value != None:
      if attr_name == 'location.global_frame':
@@ -8,11 +10,8 @@ def attribute_callback(self,attr_name,value):
      elif attr_name == 'armed': print(json.dumps({ 'isArmed':value }))
 
 def send_ned_velocity(vehicle,vx,vy,vz):
-   print(json.dumps({ 'dbg':"about to  encode message" }))
-   msg = vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,mavlink.MAV_FRAME_LOCAL_NED,0b0000111111000111,0,0,0,vx,vy,vz,0,0,0,0,0)
-   print(json.dumps({ 'dbg':"encoded message" }))
+   msg = vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,FRAME_LOCAL_NED,0b0000111111000111,0,0,0,vx,vy,vz,0,0,0,0,0)
    vehicle.send_mavlink(msg)
-   print(json.dumps({ 'dbg':"sent message" }))
 
 def process_command(command,vehicle):
    x = command.split();

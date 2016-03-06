@@ -9,6 +9,7 @@ let parallel = null;
 let reference = null;
 let home = null;
 let isTracking = false;
+let modePending = null;
 
 gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
 {
@@ -36,15 +37,20 @@ const setVelocity = Promise.coroutine(function *()
     let vy = Math.sin(forwardAzmuth)*speed;
     let modeName = threeDR.modeName();
 
+    console.log(`fAz = ${forwardAzmuth} dist = ${distance} speed = ${speed} ---> vx = ${vx} vy = ${vy}`);
+
     if(modeName != "RTL")
     {
       if(modeName != "GUIDED")
       {
         if(modePending == null)
         {
-          modePending = 'guided';
+          modePending = 'GUIDED';
+console.log("set guided mode");
           threeDR.guided();
+console.log("wait for guided mode");
           yield threeDR.waitForMode("GUIDED");
+console.log("guided is set");
           modePending = null;
         }
       }
