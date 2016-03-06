@@ -9,8 +9,8 @@ def attribute_callback(self,attr_name,value):
      elif attr_name == 'mode': print(json.dumps({ 'modeName':value.name }))
      elif attr_name == 'armed': print(json.dumps({ 'isArmed':value }))
 
-def send_ned_velocity(vehicle,vx,vy,vz):
-   msg = vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,FRAME_LOCAL_NED,0b0000111111000111,0,0,0,vx,vy,vz,0,0,0,0,0)
+def send_ned_velocity(vehicle,vn,ve,vd):
+   msg = vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,FRAME_LOCAL_NED,0b0000111111000111,0,0,0,vn,ve,vd,0,0,0,0,0)
    vehicle.send_mavlink(msg)
 
 def process_command(command,vehicle):
@@ -30,15 +30,18 @@ def process_command(command,vehicle):
    elif x[0] == "rtl":
       vehicle.mode = dronekit.VehicleMode("RTL")
       print(json.dumps({ 'cmd':'rtl' }))
+   elif x[0] == "loiter":
+      vehicle.mode = dronekit.VehicleMode("LOITER")
+      print(json.dumps({ 'cmd':'loiter' }))
    elif x[0] == "mode":
       print(json.dumps({ 'modeName':vehicle.mode.name }))
    elif x[0] == "setVelocity":
-      vx = float(x[1])
-      vy = float(x[2])
-      vz = float(x[3])
-      cmd_str = "velocity " + str(vx) + " " + str(vy) + " " + str(vz)
+      vn = float(x[1])
+      ve = float(x[2])
+      vd = float(x[3])
+      cmd_str = "velocity " + str(vn) + " " + str(ve) + " " + str(vd)
       print(json.dumps({ 'cmd':cmd_str }))
-      send_ned_velocity(vehicle,vx,vy,vz)
+      send_ned_velocity(vehicle,vn,ve,vd)
 
 
 

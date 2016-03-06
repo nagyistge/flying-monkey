@@ -52,6 +52,7 @@ const init = Promise.promisify(function(done)
         isArmed = json.isArmed;
         console.log("isArmed updateed to: ",isArmed);
       }
+      else if(json.cmd != null) console.log("cmd: ",json.cmd);
     }
     catch(e) {}
   });
@@ -97,14 +98,18 @@ module.exports =
     if(shell != null && isArmed) shell.send("guided");
   },
   isArmed:function() { return isArmed; },
+  loiter:function()
+  {
+    if(shell != null && isArmed) shell.send("loiter");
+  },
   modeName:function() { return modeName; },
   rtl:function()
   {
     if(shell != null && isArmed) shell.send("rtl");
   },
-  setVelocity:function(vx,vy,vz)
+  setVelocity:function(vn,ve,vd)
   {
-    if(shell != null && isArmed) shell.send(`setVelocity ${vx} ${vy} ${vz}`);
+    if(shell != null && isArmed) shell.send(`setVelocity ${vn} ${ve} ${vd}`);
   },
   waitForMode: function(targetModeName)
   {

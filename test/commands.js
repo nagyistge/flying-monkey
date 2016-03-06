@@ -59,6 +59,17 @@ const gotoNav = Promise.promisify(function(url,callback)
   });
 });
 
+const loiterlNav = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/loiter',
+    json: true
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const rtlNav = Promise.promisify(function(url,callback)
 {
   request.post({
@@ -81,11 +92,9 @@ const trackNav = Promise.promisify(function(url,callback)
   });
 });
 
-const send = Promise.coroutine(function*(url,id,name,lat,long,alt)
+const goto = Promise.coroutine(function*(url)
 {
-  let now = new Date();
-
-  yield sendCoord(url,id,name,now.valueOf(),lat,long,alt);
+  return yield gotoNav(url);
 });
 
 const list = Promise.coroutine(function*(url)
@@ -93,19 +102,26 @@ const list = Promise.coroutine(function*(url)
   return yield getList(url);
 });
 
+const loiter = Promise.coroutine(function*(url)
+{
+  return yield loiterlNav(url);
+});
+
 const parallel = Promise.coroutine(function*(url,id)
 {
   return yield parallelNav(url,id);
 });
 
-const goto = Promise.coroutine(function*(url)
-{
-  return yield gotoNav(url);
-});
-
 const rtl = Promise.coroutine(function*(url)
 {
   return yield rtlNav(url);
+});
+
+const send = Promise.coroutine(function*(url,id,name,lat,long,alt)
+{
+  let now = new Date();
+
+  yield sendCoord(url,id,name,now.valueOf(),lat,long,alt);
 });
 
 const track = Promise.coroutine(function*(url)
@@ -117,6 +133,7 @@ module.exports =
 {
   goto:goto,
   list:list,
+  loiter:loiter,
   parallel:parallel,
   rtl:rtl,
   send:send,
