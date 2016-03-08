@@ -40,13 +40,13 @@ const setVelocity = Promise.coroutine(function *()
     let to = target.src.current;
     let forwardAzmuth = yield numerics.forwardAzmuth(from.lat,from.long,to.lat,to.long);
     let distance = yield numerics.haversine(from.lat,from.long,to.lat,to.long);
-    let speed = (distance*distance)/9;
+    let speed = 0.80* Math.sqrt(distance*distance*distance)/9;
 
     if(distance <= 2 && speed > 1) speed = 1;
-    if(speed > 2) speed = 2;
+    if(speed > 8) speed = 8;
 
     let vn = Math.cos(forwardAzmuth)*speed;
-    let ve = Math.sin(forwardAzmuth)*speed;
+    let ve = -1.0*Math.sin(forwardAzmuth)*speed;
     let modeName = threeDR.modeName();
 
     console.log(`fAz = ${forwardAzmuth} dist = ${distance} speed = ${speed} ---> vn = ${vn} ve = ${ve}`);
