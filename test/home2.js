@@ -17,16 +17,7 @@ function *rotated(id,n,spokes,alt)
   }
 }
 
-commands.list("http://" + program.host + ":3000/").then(function(idList)
-{
-  if(idList != null && idList['*'] != null)
-  {
-    let current = idList['*'].current;
-    let centerLat = current.lat;
-    let centerLong = current.long;
-    let spokes = spokeGenerator(centerLat,centerLong,75,720);
-    let series = [];
+let spokes = spokeGenerator(19.823061,-155.469247,75,720);
+let series = [];
 
-    gps.sendSeries(0,rotated(0,1,spokes,current.alt));
-  }
-});
+gps.sendSeries(0,rotated(0,1,spokes,5199.888));

@@ -21,20 +21,50 @@
    .mapbox.map('map-one', 'mapbox.streets', { scrollWheelZoom: false })
    .setView([<%- frameCenterLat %>,<%- frameCenterLong %>], 14);
   var myLayer = L.mapbox.featureLayer().addTo(map);
+  var flightPathOptions = { color: '#FFDF00', smoothFactor:3.5 };
+  var flightPath = L.polyline([],flightPathOptions).addTo(map);
 
   myLayer.setGeoJSON(geoJSON);
 
   function updateGPSCoord()
   {
-     $.getJSON('get_gps',function(jd)
-     {
-       var newGeoJSON = { "type": "FeatureCollection", features:jd.features }
+    $.getJSON('get_gps',function(jd)
+    {
+      var newGeoJSON = { "type": "FeatureCollection", features:jd.features }
 
-       myLayer.setGeoJSON(newGeoJSON);
-       map.setView([jd.center.lat,jd.center.long]);
-     });
+      myLayer.setGeoJSON(newGeoJSON);
+      map.setView([jd.center.lat,jd.center.long]);
+    });
   }
-  $(document).ready(function() { setInterval(updateGPSCoord,1000) });
+
+  function updateFlightPath()
+  {
+    data = { deviceId:'*' };
+    $.ajax(
+    {
+      type:"POST",
+      url: "nav/getFlightPath",
+      data: data,
+      success: function(data)
+      {
+        var path = [];
+
+        if(data && data.current)
+        {
+          for(var i = 0;i < data.current.length;i++) path.push(L.latLng(data.current[i].lat,data.current[i].long));
+        }
+        flightPath.setLatLngs(path);
+      }
+    });
+  }
+
+  function update()
+  {
+    updateGPSCoord();
+    updateFlightPath();
+  }
+
+  $(document).ready(function() { setInterval(update,1000) });
 </script>
 </body>
 </html>

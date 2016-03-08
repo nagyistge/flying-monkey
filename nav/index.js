@@ -10,11 +10,23 @@ let separationVectors = {};
 let home = null;
 let isTracking = false;
 let modePending = null;
+let flightData = {};
+
+function recordFlightData(gpsObj,now)
+{
+  if(flightData[gpsObj.id] == null) flightData[gpsObj.id] = { paths:[], current:[] };
+
+  let flight = flightData[gpsObj.id];
+
+  flight.current.push({ lat:gpsObj.src.current.lat, long:gpsObj.src.current.long, alt:gpsObj.src.current.alt, millis:now.valueOf() });
+}
 
 gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
 {
-  home = gpsObj;
+  let now = new Date();
 
+  home = gpsObj;
+  recordFlightData(gpsObj,now);
   if(isTracking) yield setVelocity();
 }));
 
@@ -57,10 +69,10 @@ const setVelocity = Promise.coroutine(function *()
 
 const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
 {
+  let now = new Date();
+
   if(home != null && keyId == gpsObj.id)
   {
-    let now = new Date();
-
     if(separationVectors[gpsObj.id] == null)
     {
       separationVectors[gpsObj.id] =
@@ -84,7 +96,6 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
     }
   }
 });
-
 
 const gotoTarget = Promise.coroutine(function *(track)
 {
@@ -110,6 +121,19 @@ const gotoTarget = Promise.coroutine(function *(track)
 
 module.exports =
 {
+  archive: function(id)
+  {
+    if(id != null && flightData[id] != null && flightData[id].current.length != 0)
+    {
+      flightData[id].paths.push({ path:flightData[id].current });
+      flightData[id].current = [];
+    }
+  },
+  getFlightPaths: function(id)
+  {
+    if(flightData[id] != null) return flightData[id];
+    return null;
+  },
   goto: function() { gotoTarget(false); },
   loiter: function() { threeDR.loiter(); },
   parallel: function(id)
