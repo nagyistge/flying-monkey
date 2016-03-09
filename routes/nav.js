@@ -19,12 +19,16 @@ router.post('/getFlightPath',function(req,res,next)
   {
     let flightPaths = nav.getFlightPaths(req.body.deviceId);
 
-    if(req.body.pathNum != null)
+    if(flightPaths != null)
     {
-      if(req.body.pathNum < flightPaths.paths.length) res.status(200).json(flightPaths.paths[req.body.pathNum]);
-      else res.status(200).send('OK');
+      if(req.body.pathNum != null)
+      {
+        if(req.body.pathNum < flightPaths.paths.length) res.status(200).json(flightPaths.paths[req.body.pathNum]);
+        else res.status(200).send('OK');
+      }
+      else res.status(200).json({ current:flightPaths.current });
     }
-    else res.status(200).json({ current:flightPaths.current });
+    else res.status(200).send('OK');
   }
   else res.status(200).send('OK');
 });

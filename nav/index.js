@@ -27,22 +27,25 @@ gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
 
   home = gpsObj;
   recordFlightData(gpsObj,now);
-  if(isTracking) yield setVelocity();
+  if(isTracking)
+  {
+    yield setVelocity();
+    yield setYaw();
+  }
 }));
 
 const setVelocity = Promise.coroutine(function *()
 {
   let target = gpsDB.getLoc('x');
 
-  if(target && target.src.current && home && home.src.current) // && threeDR.isArmed())
+  if(target && target.src.current && home && home.src.current && threeDR.isArmed())
   {
     let from = home.src.current;
     let to = target.src.current;
     let forwardAzmuth = yield numerics.forwardAzmuth(from.lat,from.long,to.lat,to.long);
     let distance = yield numerics.haversine(from.lat,from.long,to.lat,to.long);
-    let speed = 0.80* Math.sqrt(distance*distance*distance)/9;
+    let speed = distance/2;
 
-    if(distance <= 2 && speed > 1) speed = 1;
     if(speed > 8) speed = 8;
 
     let vn = Math.cos(forwardAzmuth)*speed;
@@ -63,6 +66,36 @@ const setVelocity = Promise.coroutine(function *()
         }
       }
       else threeDR.setVelocity(vn,ve,0);
+    }
+  }
+});
+
+const setYaw = Promise.coroutine(function *()
+{
+  let target = gpsDB.getLoc(keyId);
+
+  if(target && target.src.current && home && home.src.current && threeDR.isArmed())
+  {
+    let from = home.src.current;
+    let to = target.src.current;
+    let forwardAzmuth = yield numerics.forwardAzmuth(from.lat,from.long,to.lat,to.long);
+    let yaw = forwardAzmuth/(2*Math.PI)*360;
+
+    if(yaw < 0) yaw = yaw + 360;
+    console.log(`fAz = ${forwardAzmuth} Yaw = ${yaw}`);
+    if(modeName != "RTL")
+    {
+      if(modeName != "GUIDED")
+      {
+        if(modePending == null)
+        {
+          modePending = 'GUIDED';
+          threeDR.guided();
+          yield threeDR.waitForMode("GUIDED");
+          modePending = null;
+        }
+      }
+      else threeDR.setYaw(yaw);
     }
   }
 });
@@ -92,7 +125,11 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
       };
 
       gpsDB.addGPSCoord("x","target",now.valueOf(),translated.lat,translated.long,translated.alt);
-      if(isTracking) yield setVelocity();
+      if(isTracking)
+      {
+        yield setVelocity();
+        yield setYaw();
+      }
     }
   }
 });

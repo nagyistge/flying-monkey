@@ -111,6 +111,10 @@ module.exports =
   {
     if(shell != null && isArmed) shell.send(`setVelocity ${vn} ${ve} ${vd}`);
   },
+  setYaw:function(yaw)
+  {
+    if(shell != null && isArmed) shell.send(`setYaw ${yaw}`);
+  },
   waitForMode: function(targetModeName)
   {
     if(shell != null) return waitForMode(targetModeName);
