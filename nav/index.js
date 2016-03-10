@@ -46,10 +46,12 @@ const setVelocity = Promise.coroutine(function *()
     let distance = yield numerics.haversine(from.lat,from.long,to.lat,to.long);
     let speed = distance/2;
 
+    forwardAzmuth = -1.0*forwardAzmuth;
+
     if(speed > 8) speed = 8;
 
     let vn = Math.cos(forwardAzmuth)*speed;
-    let ve = -1.0*Math.sin(forwardAzmuth)*speed;
+    let ve = Math.sin(forwardAzmuth)*speed;
     let modeName = threeDR.modeName();
 
     console.log(`fAz = ${forwardAzmuth} dist = ${distance} speed = ${speed} ---> vn = ${vn} ve = ${ve}`);
@@ -79,7 +81,8 @@ const setYaw = Promise.coroutine(function *()
     let from = home.src.current;
     let to = target.src.current;
     let forwardAzmuth = yield numerics.forwardAzmuth(from.lat,from.long,to.lat,to.long);
-    let yaw = forwardAzmuth/(2*Math.PI)*360;
+    let yaw = -1.0*forwardAzmuth/(2*Math.PI)*360;
+    let modeName = threeDR.modeName();
 
     if(yaw < 0) yaw = yaw + 360;
     console.log(`fAz = ${forwardAzmuth} Yaw = ${yaw}`);

@@ -14,9 +14,9 @@ def send_ned_velocity(vehicle,vn,ve,vd):
    msg = vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,FRAME_LOCAL_NED,0b0000111111000111,0,0,0,vn,ve,vd,0,0,0,0,0)
    vehicle.send_mavlink(msg)
 
-def condition_yaw(heading):
-   msg = vehicle.message_factory.command_long_encode(0,0,mavutil.mavlink.MAV_CMD_CONDITION_YAW,0,heading,0,1,0,0,0,0)
-    vehicle.send_mavlink(msg)
+def condition_yaw(vehicle,heading):
+   msg = vehicle.message_factory.command_long_encode(0,0,MAV_CMD_CONDITION_YAW,0,heading,0,1,0,0,0,0)
+   vehicle.send_mavlink(msg)
 
 def process_command(command,vehicle):
    x = command.split();
@@ -71,7 +71,6 @@ def main():
 
 try:
    import dronekit
-   import mavutil
    import sys
    import json
    main()
