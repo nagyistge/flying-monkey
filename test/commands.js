@@ -105,6 +105,17 @@ const navTrack = Promise.promisify(function(url,callback)
   });
 });
 
+const navUntrack = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/untrack',
+    json: true
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const sendCoord = Promise.promisify(function(url,id,name,millis,lat,long,alt,callback)
 {
   request.post({
@@ -171,6 +182,11 @@ const track = Promise.coroutine(function*(url)
   return yield navTrack(url);
 });
 
+const untrack = Promise.coroutine(function*(url)
+{
+  return yield navUntrack(url);
+});
+
 module.exports =
 {
   archive:archive,
@@ -181,5 +197,6 @@ module.exports =
   parallel:parallel,
   rtl:rtl,
   send:send,
-  track:track
+  track:track,
+  untrack:untrack
 };

@@ -3,8 +3,9 @@
 const Promise = require('bluebird');
 const engine = require('../numerics');
 
-function gpsSource(latitude0,longitude0,altitude0)
+function gpsSource(id,latitude0,longitude0,altitude0)
 {
+  this.id = id;
   this.samples = [];
   this.latitude0 = latitude0;
   this.longitude0 = longitude0;
@@ -24,7 +25,7 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
       let initialVariance = new Float64Array([0.01,0.01,0.01]);
 
       this.state = yield engine.kalmanInitialGuess(initialObservation,initialVariance);
-      this.model = yield engine.kalmanNewModel(0.0001,0.003);
+      this.model = yield engine.kalmanNewModel(this.id,0.0001,0.003);
       this.samples = [sample];
       this.initialized = true;
     }
@@ -32,10 +33,10 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
     {
       this.samples.push(sample);
 
-      let predictedState = yield engine.kalmanPredict(this.model,this.state);
+      let predictedState = yield engine.kalmanPredict(this.id,this.model,this.state,0.333);
       let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
 
-      this.state = yield engine.kalmanUpdate(this.model,predictedState,observations);
+      this.state = yield engine.kalmanUpdate(this.id,this.model,predictedState,observations,0.333);
     }
   }
   catch(e)
@@ -62,7 +63,7 @@ gpsSource.prototype.predict = Promise.coroutine(function*()
 
   if(this.model != null)
   {
-    let predictedState = yield engine.kalmanPredict(this.model,this.state);
+    let predictedState = yield engine.kalmanPredict(this.id,this.model,this.state,0.333);
     let coordArray = yield engine.kalmanStateMean(predictedState);
     let varianceArray = yield engine.kalmanStateVariance(predictedState);
 
@@ -86,9 +87,9 @@ gpsSource.prototype.prune = function()
 
 module.exports =
 {
-  newSource: function(latitude0,longitude0,altitude0)
+  newSource: function(id,latitude0,longitude0,altitude0)
   {
-    let source = new gpsSource(latitude0,longitude0,altitude0);
+    let source = new gpsSource(id,latitude0,longitude0,altitude0);
 
      setInterval(function() { source.prune(); },500);
      return source;

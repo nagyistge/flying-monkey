@@ -183,5 +183,6 @@ module.exports =
     gpsDB.update(id,deviceUpdate);
   },
   rtl: function() { threeDR.rtl(); },
-  track: function() { isTracking = true; }
+  track: function() { isTracking = true; },
+  untrack: function() { isTracking = false; }
 }

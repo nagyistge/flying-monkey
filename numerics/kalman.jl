@@ -4,24 +4,29 @@ import Distributions;
 
 export newModel,initialGuess,predict,update,extractMeanFromState,extractVarianceFromState;
 
+deltaTLatch = Dict{UTF8String,Float64}();
+
 function initialGuess(observations::Array{Float64,1},varianceEstimate::Array{Float64,1})
    return Distributions.MvNormal(copy(observations),copy(varianceEstimate))
 end
 
-function newModel(processVariance::Float64,observationVariance::Float64)
-   M_p::Matrix{Float64} = eye(3);
-   M_v::Matrix{Float64} = eye(3)*processVariance;
-   O_p::Matrix{Float64} = eye(3);
-   O_v::Matrix{Float64} = eye(3)*observationVariance;
+function newModel(id,processVariance::Float64,observationVariance::Float64)
+   #f(t) = deltaTLatch[id]
+   f(t) = eye(3);
+   v(t) = eye(3)*processVariance;
+   g(t) = eye(3);
+   w(t) = eye(3)*observationVariance;
 
-   return StateSpace.LinearGaussianSSM(M_p,M_v,O_p,O_v);
+   return StateSpace.LinearGaussianSSM(f,(t)->zeros(Float64,3,1),v,g,w);
 end
 
-function update(model,predictedState,observations)
+function update(id,model,predictedState,observations,deltaT)
+   deltaTLatch[id] = deltaT
    return StateSpace.update(model,predictedState,copy(observations));
 end
 
-function predict(model,state)
+function predict(id,model,state,deltaT)
+   deltaTLatch[id] = deltaT
    return StateSpace.predict(model,state)
 end
 

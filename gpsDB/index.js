@@ -3,7 +3,7 @@
 const gpsSourceFactory = require('./gpsSource');
 const Promise = require('bluebird');
 
-let x = gpsSourceFactory.newSource();
+//let x = gpsSourceFactory.newSource();
 let gpsCoordinates = {};
 let keyDevice = "*";
 let router = {};
@@ -82,7 +82,7 @@ function addGPSCoord(id,name,millis,lat,long,alt)
       {
         id:id,
         name:name,
-        src:gpsSourceFactory.newSource(lat,long,alt)
+        src:gpsSourceFactory.newSource(id,lat,long,alt)
       };
 
       gpsCoordinates[id] = locus;

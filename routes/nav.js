@@ -67,4 +67,10 @@ router.post('/track',function(req,res,next)
   res.status(200).send('OK');
 });
 
+router.post('/untrack',function(req,res,next)
+{
+  nav.untrack();
+  res.status(200).send('OK');
+});
+
 module.exports = router;
