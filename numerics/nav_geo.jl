@@ -1,4 +1,4 @@
-module formulas
+module nav_geo
 
 export haversine,forwardAzmuth
 

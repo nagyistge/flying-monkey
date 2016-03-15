@@ -3,7 +3,7 @@
 const julia = require('node-julia');
 const Promise = require('bluebird');
 const kalman = julia.import('./numerics/kalman');
-const formulas = julia.import('./numerics/formulas');
+const nav_geo = julia.import('./numerics/nav_geo');
 
 /**
  * @callback stateCallback
@@ -40,6 +40,6 @@ module.exports =
   kalmanStateMean: Promise.promisify(kalman.extractMeanFromState),
   kalmanStateVariance: Promise.promisify(kalman.extractVarianceFromState),
   kalmanUpdate: Promise.promisify(kalman.update),
-  haversine: Promise.promisify(formulas.haversine),
-  forwardAzmuth:  Promise.promisify(formulas.forwardAzmuth)
+  haversine: Promise.promisify(nav_geo.haversine),
+  forwardAzmuth:  Promise.promisify(nav_geo.forwardAzmuth)
 }
