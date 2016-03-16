@@ -10,6 +10,7 @@ function gpsSource(id,latitude0,longitude0,altitude0)
   this.latitude0 = latitude0;
   this.longitude0 = longitude0;
   this.altitude0 = altitude0;
+  this.initializing = false;
   this.initialized = false;
 }
 
@@ -21,22 +22,27 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
   {
     if(!this.initialized)
     {
-      let initialObservation = new Float64Array([lat,long,alt]);
-      let initialVariance = new Float64Array([0.01,0.01,0.01]);
+      if(!this.initializing)
+      {
+        this.initializing = true;
 
-      this.state = yield engine.kalmanInitialGuess(initialObservation,initialVariance);
-      this.model = yield engine.kalmanNewModel(this.id,0.0001,0.003);
-      this.samples = [sample];
-      this.initialized = true;
+        let initialObservation = new Float64Array([lat,long,alt]);
+        let initialVariance = new Float64Array([0.01,0.01,0.01]);
+
+        this.state = yield engine.kalmanInitialGuess(initialObservation,initialVariance);
+        this.model = yield engine.kalmanNewModel(this.id,0.0001,0.005,millis);
+        this.samples = [sample];
+        this.initialized = true;
+      }
     }
     else
     {
       this.samples.push(sample);
 
-      let predictedState = yield engine.kalmanPredict(this.id,this.model,this.state,0.333);
+      let predictedState = yield engine.kalmanPredict(this.id,this.model,this.state);
       let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
 
-      this.state = yield engine.kalmanUpdate(this.id,this.model,predictedState,observations,0.333);
+      this.state = yield engine.kalmanUpdate(this.id,this.model,predictedState,observations,millis);
     }
   }
   catch(e)
@@ -63,11 +69,22 @@ gpsSource.prototype.predict = Promise.coroutine(function*()
 
   if(this.model != null)
   {
-    let predictedState = yield engine.kalmanPredict(this.id,this.model,this.state,0.333);
+    let predictedState = yield engine.kalmanPredict(this.id,this.model,this.state);
     let coordArray = yield engine.kalmanStateMean(predictedState);
     let varianceArray = yield engine.kalmanStateVariance(predictedState);
 
-    res = { lat:coordArray[0], long:coordArray[1], alt:coordArray[2], latVar:varianceArray[0], longVar:varianceArray[1], altVar:varianceArray[2] };
+    res =
+    {
+      lat:coordArray[0],
+      long:coordArray[1],
+      alt:coordArray[2],
+      vlat:coordArray[3],
+      vlong:coordArray[4],
+      valt:coordArray[5],
+      latVar:varianceArray[0],
+      longVar:varianceArray[1],
+      altVar:varianceArray[2]
+    };
   }
   else res = yield defaultGPS(this);
   return res;

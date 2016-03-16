@@ -38,13 +38,19 @@ const setVelocity = Promise.coroutine(function *()
 {
   let target = gpsDB.getLoc('x');
 
-  if(target && target.src.current && home && home.src.current && threeDR.isArmed())
+  if(target && target.src.current && home && home.src.current)// && threeDR.isArmed())
   {
     let from = home.src.current;
     let to = target.src.current;
     let forwardAzmuth = yield numerics.forwardAzmuth(from.lat,from.long,to.lat,to.long);
     let distance = yield numerics.haversine(from.lat,from.long,to.lat,to.long);
     let speed = distance/2;
+    let tspeed = yield numerics.haversine(0.0,0.0,to.vlat,to.vlong);
+    let tdir = yield numerics.forwardAzmuth(0.0,0.0,to.vlat,to.vlong);
+    let tvn = Math.cos(tdir)*tspeed;
+    let tve = Math.sin(tdir)*tspeed;
+
+    console.log(`tspeed = ${tspeed} tdir = ${tdir} tvn = ${tvn} tve = ${tve}`);
 
     forwardAzmuth = -1.0*forwardAzmuth;
 
@@ -54,6 +60,7 @@ const setVelocity = Promise.coroutine(function *()
     let ve = Math.sin(forwardAzmuth)*speed;
     let modeName = threeDR.modeName();
 
+/*
     console.log(`fAz = ${forwardAzmuth} dist = ${distance} speed = ${speed} ---> vn = ${vn} ve = ${ve}`);
     if(modeName != "RTL")
     {
@@ -69,6 +76,7 @@ const setVelocity = Promise.coroutine(function *()
       }
       else threeDR.setVelocity(vn,ve,0);
     }
+  */
   }
 });
 
