@@ -40,6 +40,24 @@ module.exports =
   kalmanStateMean: Promise.promisify(kalman.extractMeanFromState),
   kalmanStateVariance: Promise.promisify(kalman.extractVarianceFromState),
   kalmanUpdate: Promise.promisify(kalman.update),
-  haversine: Promise.promisify(nav_geo.haversine),
-  forwardAzmuth:  Promise.promisify(nav_geo.forwardAzmuth)
+  haversine: Promise.promisify(function(lat1,long1,lat2,long2,done)
+  {
+    let args = new Float64Array(4);
+
+    args[0] = lat1;
+    args[1] = long1;
+    args[2] = lat2;
+    args[3] = long2;
+    nav_geo.haversine(args,done);
+  }),
+  forwardAzmuth: Promise.promisify(function(lat1,long1,lat2,long2,done)
+  {
+    let args = new Float64Array(4);
+
+    args[0] = lat1;
+    args[1] = long1;
+    args[2] = lat2;
+    args[3] = long2;
+    nav_geo.forwardAzmuth(args,done);
+  })
 }

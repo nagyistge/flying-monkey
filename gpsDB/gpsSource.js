@@ -78,9 +78,9 @@ gpsSource.prototype.predict = Promise.coroutine(function*()
       lat:coordArray[0],
       long:coordArray[1],
       alt:coordArray[2],
-      vlat:coordArray[3],
-      vlong:coordArray[4],
-      valt:coordArray[5],
+      vt:coordArray[3],
+      vg:coordArray[4],
+      va:coordArray[5],
       latVar:varianceArray[0],
       longVar:varianceArray[1],
       altVar:varianceArray[2]
