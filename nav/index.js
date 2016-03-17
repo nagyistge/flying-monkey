@@ -47,20 +47,25 @@ const manuver = Promise.coroutine(function *()
       }
     }
 
-    let command = manuverCommands[manuverCommands.length];
+    let command = manuverCommands[manuverCommands.length - 1];
 
     for(let i = 0;i < command.length;i++)
     {
-      if(command[i].hasOwnProperty('velocity')) threeDR.setVelocity(commad[i].velocity.vn,command[i].velocity.ve,0);
-      else if(comand[i].hasOwnProperty('yaw')) threeDR.setYaw(command[i].yaw.yawAngle);
+      if(command[i].hasOwnProperty('velocity')) threeDR.setVelocity(command[i].velocity.vn,command[i].velocity.ve,0);
+      else if(command[i].hasOwnProperty('yaw')) threeDR.setYaw(command[i].yaw.yawAngle);
     }
     manuverCommands = [];
 
     manuvering = false;
   }
+  else if(manuverCommands.length != 0)
+  {
+     console.log("discarded command:");
+     //console.log(JSON.stringify(manuverCommands[manuverCommands.length - 1],null,2));
+  }
 });
 
-setInterval(manuver,300);
+setInterval(manuver,200);
 
 /*
 const setVelocity = Promise.coroutine(function *()
