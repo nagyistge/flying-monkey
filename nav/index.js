@@ -11,6 +11,8 @@ let home = null;
 let isTracking = false;
 let modePending = null;
 let flightData = {};
+let manuverCommands = [];
+let manuvering = false;
 
 function recordFlightData(gpsObj,now)
 {
@@ -21,19 +23,46 @@ function recordFlightData(gpsObj,now)
   flight.current.push({ lat:gpsObj.src.current.lat, long:gpsObj.src.current.long, alt:gpsObj.src.current.alt, millis:now.valueOf() });
 }
 
-gpsDB.addUpdate('*',Promise.coroutine(function *(gpsObj,prev)
+function queueManuver(command)
 {
-  let now = new Date();
+  manuverCommands.push(command);
+}
 
-  home = gpsObj;
-  recordFlightData(gpsObj,now);
-  if(isTracking)
+const manuver = Promise.coroutine(function *()
+{
+  let modeName = threeDR.modeName();
+
+  if(modeName != "RTL" && manuverCommands.length != 0 && !manuvering && threeDR.isArmed())
   {
-    yield setVelocity();
-    yield setYaw();
-  }
-}));
+    manuvering = true;
 
+    if(modeName != "GUIDED")
+    {
+      if(modePending == null)
+      {
+        modePending = 'GUIDED';
+        threeDR.guided();
+        yield threeDR.waitForMode("GUIDED");
+        modePending = null;
+      }
+    }
+
+    let command = manuverCommands[manuverCommands.length];
+
+    for(let i = 0;i < command.length;i++)
+    {
+      if(command[i].hasOwnProperty('velocity')) threeDR.setVelocity(commad[i].velocity.vn,command[i].velocity.ve,0);
+      else if(comand[i].hasOwnProperty('yaw')) threeDR.setYaw(command[i].yaw.yawAngle);
+    }
+    manuverCommands = [];
+
+    manuvering = false;
+  }
+});
+
+setInterval(manuver,300);
+
+/*
 const setVelocity = Promise.coroutine(function *()
 {
   let target = gpsDB.getLoc('x');
@@ -51,7 +80,7 @@ const setVelocity = Promise.coroutine(function *()
     if(speed > 2) speed = 2;
     if(forwardAzmuth < 0) forwardAzmuth += 2*Math.PI;
     if(targetDirection < 0) targetDirection += 2*Math.PI;
-    
+
     let vn = Math.cos(forwardAzmuth)*speed;
     let ve = Math.sin(forwardAzmuth)*speed;
     let azDeg = forwardAzmuth*180/Math.PI;
@@ -60,7 +89,7 @@ const setVelocity = Promise.coroutine(function *()
 
     console.log(`azmuth = ${azDeg} dist = ${distance} speed = ${speed} ---> vn = ${vn} ve = ${ve}`);
     console.log(`targetSpeed = ${targetSpeed} tdDeg = ${tdDeg}`);
-/*
+
     if(modeName != "RTL")
     {
       if(modeName != "GUIDED")
@@ -75,7 +104,6 @@ const setVelocity = Promise.coroutine(function *()
       }
       else if(modePending == null) threeDR.setVelocity(vn,ve,0);
     }
-*/
   }
 });
 
@@ -93,7 +121,6 @@ const setYaw = Promise.coroutine(function *()
 
     if(yaw < 0) yaw = yaw + 360;
     console.log(`fAz = ${forwardAzmuth} Yaw = ${yaw}`);
-/*
     if(modeName != "RTL")
     {
       if(modeName != "GUIDED")
@@ -108,9 +135,65 @@ const setYaw = Promise.coroutine(function *()
       }
       else if(modePanding == null) threeDR.setYaw(yaw);
     }
-*/
   }
 });
+*/
+
+const trackCommand = Promise.coroutine(function *()
+{
+  let target = gpsDB.getLoc('x');
+  let key = gpsDB.getLoc(keyId);
+
+  if(target && target.src.current && home && home.src.current && key && key.src.current)
+  {
+    let homeState = home.src.current;
+    let targetState = target.src.current;
+    let keyState = key.src.current;
+
+    let homeToTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat,targetState.long);
+    let homeToKeyAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,keyState.lat,keyState.long);
+    let homeToTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat,targetState.long);
+    let targetSpeed = yield numerics.haversine(0.0,0.0,targetState.vt,targetState.vg);
+    let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,targetState.vt,targetState.vg);
+    let homeToTargetSpeed = homeToTargetDistance/2;
+
+    if(homeToTargetSpeed > 2) homeToTargetSpeed = 2;
+    if(homeToTargetAzmuth < 0) homeToTargetAzmuth += 2*Math.PI;
+    if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
+    if(targetDirection < 0) targetDirection += 2*Math.PI;
+
+    let yaw = homeToKeyAzmuth*180/Math.PI;
+    let vn = Math.cos(homeToTargetAzmuth)*homeToTargetSpeed;
+    let ve = Math.sin(homeToTargetAzmuth)*homeToTargetSpeed;
+    let res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
+
+    let httDeg = homeToTargetAzmuth*180/Math.PI;
+    let tdDeg = targetDirection*180/Math.PI;
+
+    //console.log(`homeToTargetAzmuth = ${httDeg} speed = ${homeToTargetSpeed} ---> vn = ${vn} ve = ${ve}`);
+    //console.log(`Yaw = ${yaw}`);
+    //console.log(`targetSpeed = ${targetSpeed} tdDeg = ${tdDeg}`);
+    return  res;
+  }
+  else return null;
+});
+
+const doTrackManuver = Promise.coroutine(function *()
+{
+  let command = yield trackCommand();
+
+  //console.log("trackCommand:\n",JSON.stringify(command,null,2));
+  if(command != null) queueManuver(command);
+});
+
+gpsDB.addUpdate('*',Promise.coroutine(function *(gpsObj,prev)
+{
+  let now = new Date();
+
+  home = gpsObj;
+  recordFlightData(gpsObj,now);
+  if(isTracking) yield doTrackManuver();
+}));
 
 const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
 {
@@ -137,12 +220,7 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
       };
 
       gpsDB.addGPSCoord("x","target",now.valueOf(),translated.lat,translated.long,translated.alt);
-      console.log("is tracking = ",isTracking);
-      if(isTracking)
-      {
-        yield setVelocity();
-        yield setYaw();
-      }
+      if(isTracking) yield doTrackManuver();
     }
   }
 });
