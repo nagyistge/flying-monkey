@@ -58,7 +58,7 @@ def process_command(command,vehicle):
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
 def main():
    target = "udpin:0.0.0.0:14550"
-   vehicle = dronekit.connect(target,wait_ready=True)
+   vehicle = dronekit.connect(target,wait_ready=True,rate=6)
    vehicle.add_attribute_listener('location.global_frame',attribute_callback)
    vehicle.add_attribute_listener('mode',attribute_callback)
    vehicle.add_attribute_listener('armed',attribute_callback)

@@ -137,10 +137,15 @@ function getVector(id)
   return v;
 }
 
-function update(id,callback)
+function addUpdate(id,callback)
 {
   if(router[id] == null) router[id] = [];
   router[id].push(callback);
+}
+
+function clearUpdates(id)
+{
+  if(router[id] != null) router[id] = [];
 }
 
 function getLoc(id)
@@ -155,11 +160,12 @@ module.exports =
     return gpsCoordinates;
   },
   addGPSCoord: addGPSCoord,
+  addUpdate: addUpdate,
+  clearUpdates: clearUpdates,
   getKeyDevice: function() { return keyDevice; },
-  setKeyDevice: function(id) { keyDevice = id; },
   getFeatureInfo: getFeatureInfo,
   getIdList: getIdList,
   getVector: getVector,
-  update:update,
-  getLoc:getLoc
+  getLoc:getLoc,
+  setKeyDevice: function(id) { keyDevice = id; }
 };

@@ -21,7 +21,7 @@ function recordFlightData(gpsObj,now)
   flight.current.push({ lat:gpsObj.src.current.lat, long:gpsObj.src.current.long, alt:gpsObj.src.current.alt, millis:now.valueOf() });
 }
 
-gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
+gpsDB.addUpdate('*',Promise.coroutine(function *(gpsObj,prev)
 {
   let now = new Date();
 
@@ -30,7 +30,7 @@ gpsDB.update('*',Promise.coroutine(function *(gpsObj,prev)
   if(isTracking)
   {
     yield setVelocity();
-    //yield setYaw();
+    yield setYaw();
   }
 }));
 
@@ -49,16 +49,18 @@ const setVelocity = Promise.coroutine(function *()
     let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,to.vt,to.vg);
 
     if(speed > 2) speed = 2;
-
+    if(forwardAzmuth < 0) forwardAzmuth += 2*Math.PI;
+    if(targetDirection < 0) targetDirection += 2*Math.PI;
+    
     let vn = Math.cos(forwardAzmuth)*speed;
     let ve = Math.sin(forwardAzmuth)*speed;
-    let azDeg = forwardAzmuth*360/(2*Math.PI);
-    let tdDeg = targetDirection*360/(2*Math.PI);
+    let azDeg = forwardAzmuth*180/Math.PI;
+    let tdDeg = targetDirection*180/Math.PI;
     let modeName = threeDR.modeName();
 
     console.log(`azmuth = ${azDeg} dist = ${distance} speed = ${speed} ---> vn = ${vn} ve = ${ve}`);
     console.log(`targetSpeed = ${targetSpeed} tdDeg = ${tdDeg}`);
-    /*
+/*
     if(modeName != "RTL")
     {
       if(modeName != "GUIDED")
@@ -71,9 +73,9 @@ const setVelocity = Promise.coroutine(function *()
           modePending = null;
         }
       }
-      else if(!modePending) threeDR.setVelocity(vn,ve,0);
+      else if(modePending == null) threeDR.setVelocity(vn,ve,0);
     }
-    */
+*/
   }
 });
 
@@ -81,16 +83,17 @@ const setYaw = Promise.coroutine(function *()
 {
   let target = gpsDB.getLoc(keyId);
 
-  if(target && target.src.current && home && home.src.current && threeDR.isArmed())
+  if(target && target.src.current && home && home.src.current)// && threeDR.isArmed())
   {
     let from = home.src.current;
     let to = target.src.current;
     let forwardAzmuth = yield numerics.forwardAzmuth(from.lat,from.long,to.lat,to.long);
-    let yaw = -1.0*forwardAzmuth/(2*Math.PI)*360;
+    let yaw = forwardAzmuth*180/Math.PI;
     let modeName = threeDR.modeName();
 
     if(yaw < 0) yaw = yaw + 360;
     console.log(`fAz = ${forwardAzmuth} Yaw = ${yaw}`);
+/*
     if(modeName != "RTL")
     {
       if(modeName != "GUIDED")
@@ -103,8 +106,9 @@ const setYaw = Promise.coroutine(function *()
           modePending = null;
         }
       }
-      else threeDR.setYaw(yaw);
+      else if(modePanding == null) threeDR.setYaw(yaw);
     }
+*/
   }
 });
 
@@ -137,7 +141,7 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
       if(isTracking)
       {
         yield setVelocity();
-        //yield setYaw();
+        yield setYaw();
       }
     }
   }
@@ -184,9 +188,10 @@ module.exports =
   loiter: function() { threeDR.loiter(); },
   parallel: function(id)
   {
+    if(keyId != null) gpsDB.clearUpdates(keyId);
     keyId = id;
     separationVectors[id] = null;
-    gpsDB.update(id,deviceUpdate);
+    gpsDB.addUpdate(id,deviceUpdate);
   },
   rtl: function() { threeDR.rtl(); },
   track: function() { isTracking = true; },
