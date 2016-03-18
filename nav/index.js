@@ -179,6 +179,12 @@ const trackCommand = Promise.coroutine(function *()
     let yaw = homeToKeyAzmuth*180/Math.PI;
     let vn = Math.cos(homeToTargetAzmuth)*homeToTargetSpeed;
     let ve = Math.sin(homeToTargetAzmuth)*homeToTargetSpeed;
+    let tn = Math.cos(targetDirection)*targetSpeed;
+    let te = Math.sin(targetDirection)*targetSpeed;
+
+    //vn += tn;
+    //ve += te;
+
     let res;
 
     if(vn > 0.1 || ve > 0.1) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
