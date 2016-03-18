@@ -32,17 +32,17 @@ const manuver = Promise.coroutine(function *()
 {
   let modeName = threeDR.modeName();
 
-  if(modeName != "RTL" && manuverCommands.length != 0 && !manuvering && threeDR.isArmed())
+  if(modeName != 'RTL' && manuverCommands.length != 0 && !manuvering && threeDR.isArmed())
   {
     manuvering = true;
 
-    if(modeName != "GUIDED")
+    if(modeName != 'GUIDED')
     {
       if(modePending == null)
       {
         modePending = 'GUIDED';
         threeDR.guided();
-        yield threeDR.waitForMode("GUIDED");
+        yield threeDR.waitForMode('GUIDED');
         modePending = null;
       }
     }
@@ -58,10 +58,16 @@ const manuver = Promise.coroutine(function *()
 
     manuvering = false;
   }
-  else if(manuverCommands.length != 0)
+  else if(manuverCommands.length != 0 || modeName == 'RTL')
   {
-     console.log("discarded command:");
-     //console.log(JSON.stringify(manuverCommands[manuverCommands.length - 1],null,2));
+     if(manuverCommands.length != 0) console.log("discarded command:");
+     if(modeName == 'RTL')
+     {
+       tracking == false;
+       separationVectors = {};
+       keyId = nul;
+       manuverCommands = [];
+     }
   }
 });
 
@@ -162,9 +168,10 @@ const trackCommand = Promise.coroutine(function *()
     let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,targetState.vt,targetState.vg);
     let homeToTargetSpeed = homeToTargetDistance/3;
 
-    if(homeToTargetDistance < 10) homeToTargetSpeed = homeToTargetDistance/7;
-    if(homeToTargetDistance < 5) homeToTargetSpeed = homeToTargetDistance/10;
-    if(homeToTargetSpeed > 4) homeToTargetSpeed = 4;
+    if(homeToTargetDistance <= 25) homeToTargetSpeed /= 2;
+    if(homeToTargetDistance <= 10) homeToTargetSpeed /= 2;
+    if(homeToTargetDistance <= 5) homeToTargetSpeed /= 2;
+    if(homeToTargetSpeed > 7) homeToTargetSpeed = 7;
     if(homeToTargetAzmuth < 0) homeToTargetAzmuth += 2*Math.PI;
     if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
     if(targetDirection < 0) targetDirection += 2*Math.PI;
@@ -172,10 +179,13 @@ const trackCommand = Promise.coroutine(function *()
     let yaw = homeToKeyAzmuth*180/Math.PI;
     let vn = Math.cos(homeToTargetAzmuth)*homeToTargetSpeed;
     let ve = Math.sin(homeToTargetAzmuth)*homeToTargetSpeed;
-    let res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
+    let res;
 
-    let httDeg = homeToTargetAzmuth*180/Math.PI;
-    let tdDeg = targetDirection*180/Math.PI;
+    if(vn > 0.1 || ve > 0.1) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
+    else res = [ { yaw:{ yawAngle:yaw }} ];
+
+    //let httDeg = homeToTargetAzmuth*180/Math.PI;
+    //let tdDeg = targetDirection*180/Math.PI;
 
     //console.log(`homeToTargetAzmuth = ${httDeg} speed = ${homeToTargetSpeed} ---> vn = ${vn} ve = ${ve}`);
     //console.log(`Yaw = ${yaw}`);
