@@ -51,7 +51,7 @@ const manuver = Promise.coroutine(function *()
 
     for(let i = 0;i < command.length;i++)
     {
-      if(command[i].hasOwnProperty('velocity'));// threeDR.setVelocity(command[i].velocity.vn,command[i].velocity.ve,0);
+      if(command[i].hasOwnProperty('velocity')) threeDR.setVelocity(command[i].velocity.vn,command[i].velocity.ve,0);
       else if(command[i].hasOwnProperty('yaw')) threeDR.setYaw(command[i].yaw.yawAngle);
     }
     manuverCommands = [];
@@ -65,7 +65,7 @@ const manuver = Promise.coroutine(function *()
   }
 });
 
-setInterval(manuver,200);
+setInterval(manuver,100);
 
 /*
 const setVelocity = Promise.coroutine(function *()
@@ -162,7 +162,7 @@ const trackCommand = Promise.coroutine(function *()
     let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,targetState.vt,targetState.vg);
     let homeToTargetSpeed = homeToTargetDistance/3;
 
-    if(homeToTargetSpeed > 2) homeToTargetSpeed = 2;
+    if(homeToTargetSpeed > 4) homeToTargetSpeed = 4;
     if(homeToTargetAzmuth < 0) homeToTargetAzmuth += 2*Math.PI;
     if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
     if(targetDirection < 0) targetDirection += 2*Math.PI;
