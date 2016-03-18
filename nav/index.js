@@ -162,6 +162,8 @@ const trackCommand = Promise.coroutine(function *()
     let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,targetState.vt,targetState.vg);
     let homeToTargetSpeed = homeToTargetDistance/3;
 
+    if(homeToTargetDistance < 10) homeToTargetSpeed = homeToTargetDistance/7;
+    if(homeToTargetDistance < 5) homeToTargetSpeed = homeToTargetDistance/10;
     if(homeToTargetSpeed > 4) homeToTargetSpeed = 4;
     if(homeToTargetAzmuth < 0) homeToTargetAzmuth += 2*Math.PI;
     if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
