@@ -63,9 +63,9 @@ const manuver = Promise.coroutine(function *()
      if(manuverCommands.length != 0) console.log("discarded command:");
      if(modeName == 'RTL')
      {
-       tracking == false;
+       isTracking == false;
        separationVectors = {};
-       keyId = nul;
+       keyId = null;
        manuverCommands = [];
      }
   }
@@ -166,11 +166,10 @@ const trackCommand = Promise.coroutine(function *()
     let homeToTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat,targetState.long);
     let targetSpeed = yield numerics.haversine(0.0,0.0,targetState.vt,targetState.vg);
     let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,targetState.vt,targetState.vg);
-    let homeToTargetSpeed = homeToTargetDistance/3;
+    let homeToTargetSpeed = homeToTargetDistance/2;
 
-    if(homeToTargetDistance <= 25) homeToTargetSpeed /= 2;
-    if(homeToTargetDistance <= 10) homeToTargetSpeed /= 2;
-    if(homeToTargetDistance <= 5) homeToTargetSpeed /= 2;
+    if(homeToTargetDistance <= 15) homeToTargetSpeed /= 2;
+    //if(homeToTargetDistance <= 5) homeToTargetSpeed /= 2;
     if(homeToTargetSpeed > 7) homeToTargetSpeed = 7;
     if(homeToTargetAzmuth < 0) homeToTargetAzmuth += 2*Math.PI;
     if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
@@ -187,7 +186,7 @@ const trackCommand = Promise.coroutine(function *()
 
     let res;
 
-    if(vn > 0.1 || ve > 0.1) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
+    if(Math.abs(vn) > 0.1 || Math.abs(ve > 0.1)) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
     else res = [ { yaw:{ yawAngle:yaw }} ];
 
     //let httDeg = homeToTargetAzmuth*180/Math.PI;
