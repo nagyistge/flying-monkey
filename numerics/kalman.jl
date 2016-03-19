@@ -18,6 +18,7 @@ function deltaT(id)
    else
       dt = 1;
    end
+   if dt < 0 println("dt is $dt!!!!!!!!!!") end
    return dt;
 end
 

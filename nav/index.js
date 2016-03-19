@@ -13,6 +13,8 @@ let modePending = null;
 let flightData = {};
 let manuverCommands = [];
 let manuvering = false;
+let planning = true;
+let previousYaw = null;
 
 function recordFlightData(gpsObj,now)
 {
@@ -58,7 +60,7 @@ const manuver = Promise.coroutine(function *()
 
     manuvering = false;
   }
-  else if(manuverCommands.length != 0 || modeName == 'RTL')
+  else if(!manuvering && (manuverCommands.length != 0 || modeName == 'RTL'))
   {
      if(manuverCommands.length != 0) console.log("discarded command:");
      if(modeName == 'RTL')
@@ -66,8 +68,8 @@ const manuver = Promise.coroutine(function *()
        tracking == false;
        separationVectors = {};
        keyId = nul;
-       manuverCommands = [];
      }
+     manuverCommands = [];
   }
 });
 
@@ -155,7 +157,7 @@ const trackCommand = Promise.coroutine(function *()
   let target = gpsDB.getLoc('x');
   let key = gpsDB.getLoc(keyId);
 
-  if(target && target.src.current && home && home.src.current && key && key.src.current)
+  if(target && target.src.current && home && home.src.current && key && key.src.current && planning)
   {
     let homeState = home.src.current;
     let targetState = target.src.current;
@@ -166,29 +168,50 @@ const trackCommand = Promise.coroutine(function *()
     let homeToTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat,targetState.long);
     let targetSpeed = yield numerics.haversine(0.0,0.0,targetState.vt,targetState.vg);
     let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,targetState.vt,targetState.vg);
-    let homeToTargetSpeed = homeToTargetDistance/3;
+    let homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt,targetState.long + 2*targetState.vg);
+    let homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt,targetState.long + 2*targetState.vg);
 
-    if(homeToTargetDistance <= 25) homeToTargetSpeed /= 2;
-    if(homeToTargetDistance <= 10) homeToTargetSpeed /= 2;
-    if(homeToTargetDistance <= 5) homeToTargetSpeed /= 2;
-    if(homeToTargetSpeed > 7) homeToTargetSpeed = 7;
+    //let distance = homeToTargetDistance;
+    let distance = homeToFutureTargetDistance;
+
+    let speed = distance/3;
+
+    if(distance <= 15) speed /= 2;
+    if(distance <= 7) speed /= 2;
+    if(distance <= 3) speed /= 2;
+    if(speed > 7) speed = 7;
     if(homeToTargetAzmuth < 0) homeToTargetAzmuth += 2*Math.PI;
     if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
-    if(targetDirection < 0) targetDirection += 2*Math.PI;
+
+    //let azmuth = homeToTargetAzmuth;
+    let azmuth = homeToFutureTargetAzmuth;
 
     let yaw = homeToKeyAzmuth*180/Math.PI;
-    let vn = Math.cos(homeToTargetAzmuth)*homeToTargetSpeed;
-    let ve = Math.sin(homeToTargetAzmuth)*homeToTargetSpeed;
-    let tn = Math.cos(targetDirection)*targetSpeed;
-    let te = Math.sin(targetDirection)*targetSpeed;
-
-    //vn += tn;
-    //ve += te;
+    let vn = Math.cos(azmuth)*speed;
+    let ve = Math.sin(azmuth)*speed;
 
     let res;
 
     if(vn > 0.1 || ve > 0.1) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
-    else res = [ { yaw:{ yawAngle:yaw }} ];
+    else
+    {
+      let yawDuration = 2000;
+
+      if(previousYaw != null)
+      {
+        let yawDifference = yaw - previousYaw;
+
+        if(yawDifference < -180) yawDifference = abs(yawDifference + 180);
+        if(yawDifference > 180) yawDifference = abs(yawDifference - 180);
+        previousYaw = yaw;
+        yawDuration = yawDuration/180*2000;
+        planning = false;
+        console.log("Yaw duration = ",yawDuration);
+        setTimeout(function() { planning = true; },yawDuration);
+      }
+
+      res = [ { yaw:{ yawAngle:yaw }} ];
+    }
 
     //let httDeg = homeToTargetAzmuth*180/Math.PI;
     //let tdDeg = targetDirection*180/Math.PI;
