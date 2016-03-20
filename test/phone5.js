@@ -13,20 +13,23 @@ function *rotated(id,n,spokes,alt)
   {
     let index = Math.round(i + spokes.length/n*id) % spokes.length;
 
-    yield { id:`FF000000${id}`, name:"phone4", lat:spokes[index][0], long:spokes[index][1], alt:alt };
+    yield { id:`FF000000${id}`, name:"phone5", lat:spokes[index][0], long:spokes[index][1], alt:alt, serial:i };
   }
 }
 
-commands.list("http://" + program.host + ":3000/").then(function(idList)
+commands.reset("http://" + program.host + ":3000/","FF0000000").then(function() 
 {
-  if(idList != null && idList['*'] != null)
+  commands.list("http://" + program.host + ":3000/").then(function(idList)
   {
-    let current = idList['*'].current;
-    let centerLat = current.lat;
-    let centerLong = current.long;
-    let spokes = spokeGenerator(centerLat,centerLong,75,720);
-    let series = [];
+    if(idList != null && idList['*'] != null)
+    {
+      let current = idList['*'].current;
+      let centerLat = current.lat;
+      let centerLong = current.long;
+      let spokes = spokeGenerator(centerLat,centerLong,75,720);
+      let series = [];
 
-    gps.sendSeries(0,rotated(0,1,spokes,current.alt));
-  }
+      gps.sendSeries(0,rotated(0,1,spokes,current.alt));
+    }
+  });
 });

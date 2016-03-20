@@ -3,6 +3,41 @@
 const request = require('request');
 const Promise = require('bluebird');
 
+const coordReset = Promise.promisify(function(url,id,callback)
+{
+  request.post({
+    url: url + 'log_gps/reset',
+    json: true,
+    body:
+    {
+      deviceId:id
+    }
+  },
+  function (err,res,body) {
+    callback(err,body);
+  });
+});
+
+const coordSend = Promise.promisify(function(url,id,name,millis,lat,long,alt,serial,callback)
+{
+  request.post({
+    url: url + 'log_gps',
+    json: true,
+    body:
+    {
+      device: { deviceId:id, deviceName:name },
+      date:millis,
+      lat:lat,
+      long:long,
+      alt:alt,
+      serial:serial
+    }
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const getList = Promise.promisify(function(url,callback)
 {
   request.post({
@@ -82,7 +117,6 @@ const navParallel = Promise.promisify(function(url,id,callback)
   });
 });
 
-
 const navRTL = Promise.promisify(function(url,callback)
 {
   request.post({
@@ -110,25 +144,6 @@ const navUntrack = Promise.promisify(function(url,callback)
   request.post({
     url: url + 'nav/untrack',
     json: true
-  },
-  function (err,res,body) {
-    callback(err);
-  });
-});
-
-const sendCoord = Promise.promisify(function(url,id,name,millis,lat,long,alt,callback)
-{
-  request.post({
-    url: url + 'log_gps',
-    json: true,
-    body:
-    {
-      device: { deviceId:id, deviceName:name },
-      date:millis,
-      lat:lat,
-      long:long,
-      alt:alt
-    }
   },
   function (err,res,body) {
     callback(err);
@@ -170,11 +185,16 @@ const rtl = Promise.coroutine(function*(url)
   return yield navRTL(url);
 });
 
-const send = Promise.coroutine(function*(url,id,name,lat,long,alt)
+const reset = Promise.coroutine(function*(url,id)
+{
+  return yield coordReset(url,id);
+});
+
+const send = Promise.coroutine(function*(url,id,name,lat,long,alt,serial)
 {
   let now = new Date();
 
-  yield sendCoord(url,id,name,now.valueOf(),lat,long,alt);
+  yield coordSend(url,id,name,now.valueOf(),lat,long,alt,serial);
 });
 
 const track = Promise.coroutine(function*(url)
@@ -196,6 +216,7 @@ module.exports =
   loiter:loiter,
   parallel:parallel,
   rtl:rtl,
+  reset:reset,
   send:send,
   track:track,
   untrack:untrack

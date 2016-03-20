@@ -13,11 +13,14 @@ function *rotated(id,n,spokes,alt)
   {
     let index = Math.round(i + spokes.length/n*id) % spokes.length;
 
-    yield { id:'*', name:"solo", lat:spokes[index][0], long:spokes[index][1], alt:alt };
+    yield { id:'*', name:"solo", lat:spokes[index][0], long:spokes[index][1], alt:alt, serial:i };
   }
 }
 
 let spokes = spokeGenerator(19.823061,-155.469247,75,720);
 let series = [];
 
-gps.sendSeries(0,rotated(0,1,spokes,5199.888));
+commands.reset("http://" + program.host + ":3000/","*").then(function()
+{
+  gps.sendSeries(0,rotated(0,1,spokes,5199.888));
+});
