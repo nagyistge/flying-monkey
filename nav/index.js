@@ -195,7 +195,6 @@ const trackCommand = Promise.coroutine(function *()
     if(Math.abs(vn) > 0.1 || Math.abs(ve > 0.1)) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
     else
     {
-/*
       let yawDuration = 2000;
 
       if(previousYaw != null)
@@ -211,7 +210,6 @@ const trackCommand = Promise.coroutine(function *()
       console.log("Yaw duration = ",yawDuration);
       setTimeout(function() { planning = true; },yawDuration);
       planning = false;
-*/
       res = [ { yaw:{ yawAngle:yaw }} ];
     }
 
