@@ -7,6 +7,8 @@ function gpsSource(id,latitude0,longitude0,altitude0)
 {
   this.id = id;
   this.stime = null;
+  this.time0 = null;
+  this.refTime = null;
   this.samples = [];
   this.latitude0 = latitude0;
   this.longitude0 = longitude0;
@@ -35,6 +37,11 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
         this.samples = [sample];
         this.initialized = true;
         this.stime = millis;
+
+        let now = new Date();
+
+        this.time0 = millis;
+        this.refTime = now.valueOf();
       }
     }
     else
@@ -99,10 +106,11 @@ gpsSource.prototype.prune = function()
 {
   let now = new Date();
   let newSamples = [];
+  let checkTime = now.valueOf() + (this.time0 - this.refTime) - 5000;
 
   for(let i = 0;i < this.samples.length;i++)
   {
-    if(now.valueOf() - 5000 < this.samples[i].millis) newSamples.push(this.samples[i]);
+    if(checkTime < this.samples[i].millis) newSamples.push(this.samples[i]);
   }
   this.samples = newSamples;
 }
