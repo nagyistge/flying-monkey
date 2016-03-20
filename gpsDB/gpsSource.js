@@ -6,6 +6,7 @@ const engine = require('../numerics');
 function gpsSource(id,latitude0,longitude0,altitude0)
 {
   this.id = id;
+  this.stime = 0;
   this.samples = [];
   this.latitude0 = latitude0;
   this.longitude0 = longitude0;
@@ -31,13 +32,15 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
 
         this.state = yield engine.kalmanInitialGuess(initialObservation,initialVariance);
         this.model = yield engine.kalmanNewModel(this.id,0.0001,0.005,millis);
+        this.stime = millis;
         this.samples = [sample];
         this.initialized = true;
       }
     }
-    else
+    else if(millis > this.stime)
     {
       this.samples.push(sample);
+      this.stime = millis;
 
       let predictedState = yield engine.kalmanPredict(this.id,this.model,this.state);
       let observations = new Float64Array([sample.lat,sample.long,sample.alt]);
