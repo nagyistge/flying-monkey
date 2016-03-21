@@ -21,8 +21,13 @@ function checkSerial(id,serial)
 
 const addOrientation = Promise.coroutine(function *(homeState,from)
 {
-  homeState.azmuth = yield numerics.forwardAzmuth(from.lat,from.long,homeState.lat,homeState.long);
-  homeState.distance = yield numerics.haversine(from.lat,from.long,homeState.lat,homeState.long);
+  let azmuth = yield numerics.forwardAzmuth(from.lat,from.long,homeState.lat,homeState.long);
+  let distance = yield numerics.haversine(from.lat,from.long,homeState.lat,homeState.long);
+
+  if(azmuth < 0) azmuth += 2*Math.PI;
+  azmuth = azmuth*180/Math.PI;
+
+  return { lat:homeState.lat, long:homeState.long, alt:homeState.alt, azmuth:azmuth, distance:distance };
 })
 
 router.post('/', function(req, res, next)
@@ -85,8 +90,7 @@ router.post('/', function(req, res, next)
         };
 
       }
-      addOrientation(homeState,{ lat:lat, long:long });
-      res.json({ home:homeState });
+      addOrientation(homeState,{ lat:lat, long:long }).then(function(orientation) { res.json(orientation); });
     }
     else res.json('{}');
   }

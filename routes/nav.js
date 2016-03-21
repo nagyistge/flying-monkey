@@ -47,9 +47,13 @@ router.post('/loiter',function(req,res,next)
 
 router.post('/parallel',function(req,res,next)
 {
-  if(req.body.deviceId != null)
+  if(req.body.device)
   {
-    nav.parallel(req.body.deviceId);
+    let device = null;
+
+    if(typeof req.body.device == "string") device = JSON.parse(req.body.device);
+    else device = req.body.device;
+    nav.parallel(device.deviceId);
     res.status(200).send('OK');
   }
   else next();
@@ -69,6 +73,7 @@ router.post('/track',function(req,res,next)
 
 router.post('/untrack',function(req,res,next)
 {
+  console.log(req.body);
   nav.untrack();
   res.status(200).send('OK');
 });

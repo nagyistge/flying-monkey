@@ -35,7 +35,7 @@ const sendSeries = Promise.promisify(function(count,src,done)
     let coords = src.next();
     let noise = [gpsNoise(coords.value.lat),gpsNoise(coords.value.long),altitudeNoise(coords.value.alt)];
 
-    console.log("sending: ",noise);
+    console.log("sending: lat:\t" + noise[0] + "\t long:\t" + noise[1] + "\talt:\t" + noise[2]);
     commands.send("http://" + program.host + ":3000/",coords.value.id,coords.value.name,noise[0],noise[1],noise[2],coords.value.serial);
     setTimeout(function()
     {
