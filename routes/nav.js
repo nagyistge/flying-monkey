@@ -53,6 +53,7 @@ router.post('/parallel',function(req,res,next)
 
     if(typeof req.body.device == "string") device = JSON.parse(req.body.device);
     else device = req.body.device;
+    console.log("parallel: ",device.deviceId);
     nav.parallel(device.deviceId);
     res.status(200).send('OK');
   }
@@ -67,6 +68,7 @@ router.post('/rtl',function(req,res,next)
 
 router.post('/track',function(req,res,next)
 {
+  console.log("track");
   nav.track();
   res.status(200).send('OK');
 });

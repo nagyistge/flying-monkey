@@ -167,14 +167,25 @@ const trackCommand = Promise.coroutine(function *()
     let homeToKeyAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,keyState.lat,keyState.long);
     let homeToTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat,targetState.long);
     let targetSpeed = yield numerics.haversine(0.0,0.0,targetState.vt,targetState.vg);
+    let homeSpeed = yield numerics.haversine(0.0,0.0,homeState.vt,homeState.vg);
     let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,targetState.vt,targetState.vg);
-    let homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + targetState.vt,targetState.long + targetState.vg);
-    let homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + targetState.vt,targetState.long + targetState.vg);
+
+    let homeToFutureTargetAzmuth;
+    let homeToFutureTargetDistance;
+    if(homeState.vt != null && homeState.vg != null)
+    {
+      homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt - homeState.vt/2,targetState.long + 2*targetState.vg - homeState.vg/2);
+      homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt - homeState.vt/2,targetState.long + 2*targetState.vg - homeState.vg/2);
+    }
+    else
+    {
+      homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt,targetState.long + 2*targetState.vg);
+      homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt,targetState.long + 2*targetState.vg);
+    }
 
     //let distance = homeToTargetDistance;
     let distance = homeToFutureTargetDistance;
-
-    let speed = distance/2;
+    let speed = distance/3;
 
     if(distance <= 15) speed /= 2;
     if(distance <= 5) speed /= 2;
@@ -185,14 +196,15 @@ const trackCommand = Promise.coroutine(function *()
 
     //let azmuth = homeToTargetAzmuth;
     let azmuth = homeToFutureTargetAzmuth;
-
+    
     let yaw = homeToKeyAzmuth*180/Math.PI;
     let vn = Math.cos(azmuth)*speed;
     let ve = Math.sin(azmuth)*speed;
-
     let res;
 
-    if(Math.abs(vn) > 0.1 || Math.abs(ve > 0.1)) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
+    console.log(`distance = ${distance} speed = ${speed} homeSpeed = ${homeSpeed}`)
+
+    if(speed > 0.1 || homeSpeed > 0.1) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
     else
     {
 /*
@@ -221,6 +233,7 @@ const trackCommand = Promise.coroutine(function *()
     //console.log(`homeToTargetAzmuth = ${httDeg} speed = ${homeToTargetSpeed} ---> vn = ${vn} ve = ${ve}`);
     //console.log(`Yaw = ${yaw}`);
     //console.log(`targetSpeed = ${targetSpeed} tdDeg = ${tdDeg}`);
+    console.log("tracking = ",res);
     return  res;
   }
   else return null;
