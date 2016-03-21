@@ -168,8 +168,8 @@ const trackCommand = Promise.coroutine(function *()
     let homeToTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat,targetState.long);
     let targetSpeed = yield numerics.haversine(0.0,0.0,targetState.vt,targetState.vg);
     let targetDirection = yield numerics.forwardAzmuth(0.0,0.0,targetState.vt,targetState.vg);
-    let homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt,targetState.long + 2*targetState.vg);
-    let homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt,targetState.long + 2*targetState.vg);
+    let homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + targetState.vt,targetState.long + targetState.vg);
+    let homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + targetState.vt,targetState.long + targetState.vg);
 
     //let distance = homeToTargetDistance;
     let distance = homeToFutureTargetDistance;
@@ -195,6 +195,7 @@ const trackCommand = Promise.coroutine(function *()
     if(Math.abs(vn) > 0.1 || Math.abs(ve > 0.1)) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
     else
     {
+/*
       let yawDuration = 2000;
 
       if(previousYaw != null)
@@ -210,6 +211,7 @@ const trackCommand = Promise.coroutine(function *()
       console.log("Yaw duration = ",yawDuration);
       setTimeout(function() { planning = true; },yawDuration);
       planning = false;
+*/
       res = [ { yaw:{ yawAngle:yaw }} ];
     }
 
@@ -249,9 +251,8 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
   {
     if(separationVectors[gpsObj.id] == null)
     {
-
-      let azmuth = yield numerics.forwardAzmuth(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
-      let distance = yield numerics.haversine(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
+      let azmuth = yield numerics.forwardAzmuth(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
+      let distance = yield numerics.haversine(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
 
       separationVectors[gpsObj.id] =
       {
@@ -266,19 +267,18 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
         vector:[home.src.current.lat - gpsObj.src.current.lat,home.src.current.long - gpsObj.src.current.long,home.src.current.alt - gpsObj.src.current.alt]
       };
 */
-
       gpsDB.addGPSCoord("x","target",now.valueOf(),home.src.current.lat,home.src.current.long,home.src.current.alt);
     }
     else
     {
-      /*
+/*
       let translated =
       {
         lat:gpsObj.src.current.lat + separationVectors[gpsObj.id].vector[0],
         long:gpsObj.src.current.long + separationVectors[gpsObj.id].vector[1],
         alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].vector[2]
       };
-      */
+*/
 
       let LL = yield numerics.destination(gpsObj.src.current.lat,gpsObj.src.current.long,separationVectors[gpsObj.id].azmuth,separationVectors[gpsObj.id].distance);
 
