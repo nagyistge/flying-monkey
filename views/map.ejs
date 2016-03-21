@@ -20,6 +20,17 @@
   var map = L
    .mapbox.map('map-one', 'mapbox.streets', { scrollWheelZoom: false })
    .setView([<%- frameCenterLat %>,<%- frameCenterLong %>], 14);
+
+  var layers =
+  {
+    Streets: L.mapbox.tileLayer('mapbox.streets'),
+    Outdoors: L.mapbox.tileLayer('mapbox.outdoors'),
+    Satellite: L.mapbox.tileLayer('mapbox.satellite')
+  };
+
+  layers.Streets.addTo(map);
+  L.control.layers(layers).addTo(map);
+
   var myLayer = L.mapbox.featureLayer().addTo(map);
   var flightPathOptions = { color: '#FFDF00', smoothFactor:3.5 };
   var flightPath = L.polyline([],flightPathOptions).addTo(map);

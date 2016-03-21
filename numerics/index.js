@@ -63,5 +63,15 @@ module.exports =
     args[2] = lat2;
     args[3] = long2;
     nav_geo.forwardAzmuth(args,done);
+  }),
+  destination: Promise.promisify(function(lat,long,azmuth,distance,done)
+  {
+    let args = new Float64Array(4);
+
+    args[0] = lat;
+    args[1] = long;
+    args[2] = azmuth;
+    args[3] = distance;
+    nav_geo.destination(args,done);
   })
 }

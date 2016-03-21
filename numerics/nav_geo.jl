@@ -1,6 +1,6 @@
 module nav_geo
 
-export haversine,forwardAzmuth
+export haversine,forwardAzmuth, destination
 
 function haversine(args::Array{Float64})
    lat1 = args[1];
@@ -26,6 +26,21 @@ function forwardAzmuth(args::Array{Float64})
    x = sin(lam2 - lam1)*cos(phi2);
    y = cos(phi1)*sin(phi2) - sin(phi1)*cos(phi2)*cos(lam2-lam1)
    return atan2(x,y) % (2*pi);
+end
+
+function destination(args::Array{Float64})
+  res = Array(Float64,2);
+  srcLat = args[1]*(2*pi/360);
+  srcLong = args[2]*(2*pi/360);
+  azmuth = args[3]
+  distanceInMeters = args[4];
+  distanceInRadians = distanceInMeters/6372800;
+  destLat = asin(sin(srcLat)*cos(distanceInRadians)+cos(srcLat)*sin(distanceInRadians)*cos(azmuth));
+  dlong = atan2(sin(azmuth)*sin(distanceInRadians)*cos(srcLat),cos(distanceInRadians) - sin(srcLat)*sin(destLat));
+  destLong = (srcLong - dlong + pi) % (2*pi) - pi;
+  res[1] = destLat*180/pi;
+  res[2] = destLong*180/pi;
+  return res;
 end
 
 end

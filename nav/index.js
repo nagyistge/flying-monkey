@@ -249,20 +249,44 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
   {
     if(separationVectors[gpsObj.id] == null)
     {
+
+      let azmuth = yield numerics.forwardAzmuth(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
+      let distance = yield numerics.haversine(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
+
+      separationVectors[gpsObj.id] =
+      {
+        azmuth:azmuth,
+        distance:distance,
+        alt:home.src.current.alt - gpsObj.src.current.alt
+      };
+
+/*
       separationVectors[gpsObj.id] =
       {
         vector:[home.src.current.lat - gpsObj.src.current.lat,home.src.current.long - gpsObj.src.current.long,home.src.current.alt - gpsObj.src.current.alt]
       };
+*/
 
       gpsDB.addGPSCoord("x","target",now.valueOf(),home.src.current.lat,home.src.current.long,home.src.current.alt);
     }
     else
     {
+      /*
       let translated =
       {
         lat:gpsObj.src.current.lat + separationVectors[gpsObj.id].vector[0],
         long:gpsObj.src.current.long + separationVectors[gpsObj.id].vector[1],
         alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].vector[2]
+      };
+      */
+
+      let LL = yield numerics.destination(gpsObj.src.current.lat,gpsObj.src.current.long,separationVectors[gpsObj.id].azmuth,separationVectors[gpsObj.id].distance);
+
+      let translated =
+      {
+        lat:LL[0],
+        long:LL[1],
+        alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].alt
       };
 
       gpsDB.addGPSCoord("x","target",now.valueOf(),translated.lat,translated.long,translated.alt);
@@ -302,6 +326,10 @@ module.exports =
       flightData[id].paths.push({ path:flightData[id].current });
       flightData[id].current = [];
     }
+  },
+  azmuth: function(id,azmuth)
+  {
+    if(id && separationVectors[id] != null) separationVectors[id].azmuth = azmuth;
   },
   getFlightPaths: function(id)
   {

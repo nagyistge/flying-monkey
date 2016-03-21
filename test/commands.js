@@ -109,7 +109,7 @@ const navParallel = Promise.promisify(function(url,id,callback)
     json: true,
     body:
     {
-      deviceId:id
+      device: { deviceId:id }
     }
   },
   function (err,res,body) {
