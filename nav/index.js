@@ -54,6 +54,8 @@ const manuver = Promise.coroutine(function *()
 
     if(queueIndex > commandIndex)
     {
+      if(commandIndex < queueIndex - 2) commandIndex = queueIndex - 2;
+
       let command = manuverCommands[commandIndex++];
 
       for(let i = 0;i < command.length;i++)
@@ -65,8 +67,6 @@ const manuver = Promise.coroutine(function *()
         }
         else if(command[i].hasOwnProperty('yaw')) threeDR.setYaw(command[i].yaw.yawAngle);
       }
-      if(commandIndex < queueIndex - 2) commandIndex = queueIndex - 2;
-
       console.log("commandIndex = ",commandIndex," queueIndex = ",queueIndex);
     }
     manuvering = false;
@@ -84,7 +84,7 @@ const manuver = Promise.coroutine(function *()
   }
 });
 
-setInterval(manuver,250);
+setInterval(manuver,200);
 
 /*
 const setVelocity = Promise.coroutine(function *()
@@ -207,7 +207,7 @@ const trackCommand = Promise.coroutine(function *()
 
     //let azmuth = homeToTargetAzmuth;
     let azmuth = homeToFutureTargetAzmuth;
-    
+
     let yaw = homeToKeyAzmuth*180/Math.PI;
     let vn = Math.cos(azmuth)*speed;
     let ve = Math.sin(azmuth)*speed;
@@ -215,7 +215,9 @@ const trackCommand = Promise.coroutine(function *()
 
     console.log(`distance = ${distance} speed = ${speed} homeSpeed = ${homeSpeed}`)
 
-    if(speed > 0.1 || homeSpeed > 0.1) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
+    //res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
+
+    if(speed > 0.3 || homeSpeed > 0.3) res = [ { velocity:{ vn:vn, ve:ve }} ];
     else
     {
 /*
