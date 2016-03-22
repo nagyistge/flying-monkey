@@ -56,6 +56,8 @@ const manuver = Promise.coroutine(function *()
     {
       if(commandIndex < queueIndex - 2) commandIndex = queueIndex - 2;
 
+      console.log("commandIndex = ",commandIndex," queueIndex = ",queueIndex);
+
       let command = manuverCommands[commandIndex++];
 
       for(let i = 0;i < command.length;i++)
@@ -67,7 +69,6 @@ const manuver = Promise.coroutine(function *()
         }
         else if(command[i].hasOwnProperty('yaw')) threeDR.setYaw(command[i].yaw.yawAngle);
       }
-      console.log("commandIndex = ",commandIndex," queueIndex = ",queueIndex);
     }
     manuvering = false;
   }
@@ -185,8 +186,8 @@ const trackCommand = Promise.coroutine(function *()
     let homeToFutureTargetDistance;
     if(homeState.vt != null && homeState.vg != null)
     {
-      homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt - homeState.vt/4,targetState.long + 2*targetState.vg - homeState.vg/4);
-      homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt - homeState.vt/4,targetState.long + 2*targetState.vg - homeState.vg/4);
+      homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt - 0*homeState.vt,targetState.long + 2*targetState.vg - 0*homeState.vg);
+      homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + 2*targetState.vt - 0*homeState.vt,targetState.long + 2*targetState.vg - 0*homeState.vg);
     }
     else
     {
