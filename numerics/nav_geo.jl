@@ -2,12 +2,18 @@ module nav_geo
 
 export haversine,forwardAzmuth, destination
 
+function earthRadius(lat)
+   a =  6378137.0;
+   b =  6356752.3;
+   return sqrt(((a^2*cos(lat))^2 + (b^2*sin(lat))^2)/((a*cos(lat))^2 + (b*sin(lat))^2));
+end
+
 function haversine(args::Array{Float64})
    lat1 = args[1];
    long1 = args[2];
    lat2 = args[3];
    long2 = args[4];
-   return 2 * 6372800 * asin(sqrt(sind((lat2 - lat1)/2)^2 + cosd(lat1) * cosd(lat2) * sind((long2 - long1)/2)^2))
+   return 2 * earthRadius(lat1) * asin(sqrt(sind((lat2 - lat1)/2)^2 + cosd(lat1) * cosd(lat2) * sind((long2 - long1)/2)^2))
 end
 
 function forwardAzmuth(args::Array{Float64})
@@ -34,7 +40,7 @@ function destination(args::Array{Float64})
   srcLong = args[2]*(2*pi/360);
   azmuth = args[3]
   distanceInMeters = args[4];
-  distanceInRadians = distanceInMeters/6372800;
+  distanceInRadians = distanceInMeters/earthRadius(srcLat);
   destLat = asin(sin(srcLat)*cos(distanceInRadians)+cos(srcLat)*sin(distanceInRadians)*cos(azmuth));
   dlong = atan2(sin(azmuth)*sin(distanceInRadians)*cos(srcLat),cos(distanceInRadians) - sin(srcLat)*sin(destLat));
   destLong = (srcLong - dlong + pi) % (2*pi) - pi;
