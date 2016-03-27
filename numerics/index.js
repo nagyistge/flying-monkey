@@ -6,7 +6,6 @@ const Promise = require('bluebird');
 julia.eval('push!(LOAD_PATH,"numerics")');
 
 const kalman = julia.import('./numerics/kalman');
-const kalman_x = julia.import('./numerics/kalman_x');
 const nav_geo = julia.import('./numerics/nav_geo');
 
 /**
