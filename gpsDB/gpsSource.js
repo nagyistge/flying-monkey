@@ -7,8 +7,7 @@ function gpsSource(id,latitude0,longitude0,altitude0)
 {
   this.id = id;
   this.stime = null;
-  this.time0 = null;
-  this.refTime = null;
+  this.ptime = null;
   this.samples = [];
   this.latitude0 = latitude0;
   this.longitude0 = longitude0;
@@ -33,15 +32,10 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
         let initialVariance = new Float64Array([0.01,0.01,0.01]);
 
         this.state = yield engine.kalmanInitialGuess(initialObservation,initialVariance);
-        this.model = yield engine.kalmanNewModel(this.id,0.0001,0.005,0.5);
+        this.model = yield engine.kalmanNewModel(this.id,0.0001,4.368271880716285e-7,0.5);
         this.samples = [sample];
         this.initialized = true;
         this.stime = millis;
-
-        let now = new Date();
-
-        this.time0 = millis;
-        this.refTime = now.valueOf();
       }
     }
     else
@@ -106,11 +100,22 @@ gpsSource.prototype.prune = function()
 {
   let now = new Date();
   let newSamples = [];
-  let checkTime = now.valueOf() + (this.time0 - this.refTime) - 5000;
+  let maxTime;
+
+  for(let i = 0;i < this.samples.length;i++)
+    if(maxTime == null || maxTime < this.samples[i].millis) maxTime = this.samples[i].millis;
+  if(maxTime != null)
+  {
+    if(this.ptime == null || this.ptime < maxTime - 5000) this.ptime = maxTime - 5000;
+    else this.ptime += 500;
+  }
+  else this.ptime = null;
+
+  console.log("ptime = ",this.ptime);
 
   for(let i = 0;i < this.samples.length;i++)
   {
-    if(checkTime < this.samples[i].millis) newSamples.push(this.samples[i]);
+    if(this.ptime != null && this.ptime < this.samples[i].millis) newSamples.push(this.samples[i]);
   }
   this.samples = newSamples;
 }
