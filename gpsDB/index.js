@@ -74,31 +74,31 @@ function getFeatureInfo()
 
 function addGPSCoord(id,name,millis,lat,long,alt)
 {
-  let locus = gpsCoordinates[id];
+  let gpsObj = gpsCoordinates[id];
 
-  if(locus == null)
+  if(gpsObj == null)
   {
-      locus =
+      gpsObj =
       {
         id:id,
         name:name,
         src:gpsSourceFactory.newSource(id,lat,long,alt)
       };
 
-      gpsCoordinates[id] = locus;
+      gpsCoordinates[id] = gpsObj;
   }
 
-  locus.src.addCoordinate(millis,lat,long,alt);
-  locus.src.predict().then(function(predictedValue)
+  gpsObj.src.addCoordinate(millis,lat,long,alt);
+  gpsObj.src.predict().then(function(predictedValue)
   {
-    let previous = locus.src.current;
+    let previous = gpsObj.src.current;
 
-    locus.src.current = predictedValue;
+    gpsObj.src.current = predictedValue;
     if(router[id] != null)
     {
       let routes = router[id];
 
-      for(let i = 0;i < routes.length;i++) routes[i](locus,previous);
+      for(let i = 0;i < routes.length;i++) routes[i](gpsObj,previous);
     }
   });
 }

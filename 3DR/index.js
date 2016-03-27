@@ -31,8 +31,9 @@ const init = Promise.promisify(function(done)
       if(json.gpsCoords != null)
       {
         let coords = json.gpsCoords;
+        let now = new Date();
 
-        gpsDB.addGPSCoord("*","solo",new Date(),coords.lat,coords.long,coords.alt);
+        gpsDB.addGPSCoord("*","solo",now.valueOf(),coords.lat,coords.long,coords.alt);
       }
       else if(json.modeName != null)
       {
@@ -50,7 +51,7 @@ const init = Promise.promisify(function(done)
       else if(json.isArmed != null)
       {
         isArmed = json.isArmed;
-        console.log("isArmed updateed to: ",isArmed);
+        console.log("isArmed updated to: ",isArmed);
       }
       else if(json.cmd != null) console.log("cmd: ",json.cmd);
     }
