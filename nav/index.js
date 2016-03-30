@@ -219,7 +219,7 @@ const trackCommand = Promise.coroutine(function *()
     console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
 
-    if(speed > 0.3 || homeSpeed > 0.3) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
+    if(speed > 0.15 || homeSpeed > 0.15) res = [ { velocity:{ vn:vn, ve:ve }}, { yaw:{ yawAngle:yaw }} ];
     else
     {
 /*
