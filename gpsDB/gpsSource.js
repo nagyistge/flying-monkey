@@ -3,17 +3,22 @@
 const Promise = require('bluebird');
 const engine = require('../numerics');
 
-function gpsSource(id,latitude0,longitude0,altitude0)
+function gpsSource(id,latitude0,longitude0,altitude0,pvar,obvar)
 {
   this.id = id;
   this.stime = null;
   this.ptime = null;
+  this.pvar = pvar;
+  this.obvar = obvar;
   this.samples = [];
   this.latitude0 = latitude0;
   this.longitude0 = longitude0;
   this.altitude0 = altitude0;
   this.initializing = false;
   this.initialized = false;
+
+  if(this.pvar == null) this.pvar = 0.00002;
+  if(this.obvar == null) this.obvar = 0.00002;
 }
 
 gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,alt)
@@ -29,10 +34,10 @@ gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,
         this.initializing = true;
 
         let initialObservation = new Float64Array([lat,long,alt]);
-        let initialVariance = new Float64Array([0.01,0.01,0.01]);
+        let initialVariance = new Float64Array([this.obvar,this.obvar,0.01]);
 
         this.state = yield engine.kalmanInitialGuess(initialObservation,initialVariance);
-        this.model = yield engine.kalmanNewModel(this.id,0.0001,4.368271880716285e-7,0.5);
+        this.model = yield engine.kalmanNewModel(this.id,this.pvar,this.obvar,0.5);
         this.samples = [sample];
         this.initialized = true;
         this.stime = millis;
@@ -111,8 +116,6 @@ gpsSource.prototype.prune = function()
   }
   else this.ptime = null;
 
-  console.log("ptime = ",this.ptime);
-
   for(let i = 0;i < this.samples.length;i++)
   {
     if(this.ptime != null && this.ptime < this.samples[i].millis) newSamples.push(this.samples[i]);
@@ -122,9 +125,9 @@ gpsSource.prototype.prune = function()
 
 module.exports =
 {
-  newSource: function(id,latitude0,longitude0,altitude0)
+  newSource: function(id,latitude0,longitude0,altitude0,pvar,obvar)
   {
-    let source = new gpsSource(id,latitude0,longitude0,altitude0);
+    let source = new gpsSource(id,latitude0,longitude0,altitude0,pvar,obvar);
 
      setInterval(function() { source.prune(); },500);
      return source;

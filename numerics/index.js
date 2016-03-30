@@ -72,5 +72,6 @@ module.exports =
     args[2] = azmuth;
     args[3] = distance;
     nav_geo.destination(args,done);
-  })
+  }),
+  speed: Promise.promisify(nav_geo.speed)
 }
