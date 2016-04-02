@@ -85,7 +85,7 @@ const manuver = Promise.coroutine(function *()
   }
 });
 
-setInterval(manuver,200);
+setInterval(manuver,250);
 
 /*
 const setVelocity = Promise.coroutine(function *()
@@ -186,8 +186,8 @@ const trackCommand = Promise.coroutine(function *()
     let homeToFutureTargetDistance;
     if(homeState.vt != null && homeState.vg != null)
     {
-      homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + targetState.vt - 0*homeState.vt,targetState.long + 2*targetState.vg - 0*homeState.vg);
-      homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + targetState.vt - 0*homeState.vt,targetState.long + 2*targetState.vg - 0*homeState.vg);
+      homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,targetState.lat + targetState.vt - 0.25*homeState.vt,targetState.long + 2*targetState.vg - 0*homeState.vg);
+      homeToFutureTargetDistance = yield numerics.haversine(homeState.lat,homeState.long,targetState.lat + targetState.vt - 0.25*homeState.vt,targetState.long + 2*targetState.vg - 0*homeState.vg);
     }
     else
     {
@@ -282,33 +282,32 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
       let azmuth = yield numerics.forwardAzmuth(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
       let distance = yield numerics.haversine(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
 
+/*
       separationVectors[gpsObj.id] =
       {
         azmuth:azmuth,
         distance:distance,
         alt:home.src.current.alt - gpsObj.src.current.alt
       };
+*/
 
-      /*
       separationVectors[gpsObj.id] =
       {
         vector:[home.src.current.lat - gpsObj.src.current.lat,home.src.current.long - gpsObj.src.current.long,home.src.current.alt - gpsObj.src.current.alt]
       };
-      */
 
       gpsDB.addGPSCoord("x","target",now.valueOf(),home.src.current.lat,home.src.current.long,home.src.current.alt);
     }
     else
     {
-      /*
       let translated =
       {
         lat:gpsObj.src.current.lat + separationVectors[gpsObj.id].vector[0],
         long:gpsObj.src.current.long + separationVectors[gpsObj.id].vector[1],
         alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].vector[2]
       };
-      */
 
+/*
       let LL = yield numerics.destination(gpsObj.src.current.lat,gpsObj.src.current.long,separationVectors[gpsObj.id].azmuth,separationVectors[gpsObj.id].distance);
 
       let translated =
@@ -317,6 +316,7 @@ const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
         long:LL[1],
         alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].alt
       };
+*/
 
       gpsDB.addGPSCoord("x","target",now.valueOf(),translated.lat,translated.long,translated.alt);
       if(isTracking) yield doTrackManuver();

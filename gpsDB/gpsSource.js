@@ -17,8 +17,8 @@ function gpsSource(id,latitude0,longitude0,altitude0,pvar,obvar)
   this.initializing = false;
   this.initialized = false;
 
-  if(this.pvar == null) this.pvar = 0.00002;
-  if(this.obvar == null) this.obvar = 0.00002;
+  if(this.pvar == null) this.pvar = 0.0001;
+  if(this.obvar == null) this.obvar = 0.0001;
 }
 
 gpsSource.prototype.addCoordinate = Promise.coroutine(function*(millis,lat,long,alt)
