@@ -11,6 +11,7 @@ let home = null;
 let modePending = null;
 let goal = { serial:0 };
 let isManuvering = false;
+let isRecording = false;
 let flightData = {};
 let mTime = (new Date()).valueOf();
 
@@ -211,7 +212,7 @@ gpsDB.addUpdate('*',Promise.coroutine(function *(gpsObj,prev)
   let now = new Date();
 
   home = gpsObj;
-  recordFlightData(gpsObj,now);
+  if(isRecording) recordFlightData(gpsObj,now);
   if(isManuvering) yield doTrack();
 }));
 
