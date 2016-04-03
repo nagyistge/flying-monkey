@@ -78,11 +78,25 @@ function addGPSCoord(id,name,millis,lat,long,alt)
 
   if(gpsObj == null)
   {
+      let pVar;
+      let oVar;
+
+      if(id == '*')
+      {
+        pVar = 0.00008;
+        oVar = 0.00002;
+      }
+      else
+      {
+        pVar = 0.00004;
+        oVar = 0.00006;
+      }
+
       gpsObj =
       {
         id:id,
         name:name,
-        src:gpsSourceFactory.newSource(id,lat,long,alt)
+        src:gpsSourceFactory.newSource(id,lat,long,alt,pVar,oVar)
       };
 
       gpsCoordinates[id] = gpsObj;

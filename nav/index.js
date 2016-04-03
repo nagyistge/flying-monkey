@@ -32,13 +32,21 @@ function queueManuver(command)
 
 const planParallelCourse = Promise.coroutine(function *(planData)
 {
-  let destLat = planData.target.lat + planData.target.vLat;
-  let destLong = planData.target.long + planData.target.vLong;
+  let destLat = planData.target.lat;
+  let destLong = planData.target.long;
+
+
+  if(!isNaN(planData.target.vLat) && !isNaN(planData.target.vLong))
+  {
+    destLat += 2.5*planData.target.vLat;
+    destLong += 2.5*planData.target.vLong;
+  }
+  else console.log("target velocity is NaN");
 
   if(planData.home.ve != null && planData.home.vn != null)
   {
-    destLat -= 0.1*planData.home.vLat;
-    destLong -= 0.1*planData.home.vLong;
+    destLat -= 0.25*planData.home.vLat;
+    destLong -= 0.25*planData.home.vLong;
   }
 
   let homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,destLat,destLong);
@@ -50,8 +58,8 @@ const planParallelCourse = Promise.coroutine(function *(planData)
   if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
 
   let yaw = homeToKeyAzmuth*180/Math.PI;
-  let vn = Math.cos(homeToFutureTargetAzmuth)*speed;
-  let ve = Math.sin(homeToFutureTargetAzmuth)*speed;
+  let vn = Math.cos(homeToFutureTargetAzmuth)*speed*0.8;
+  let ve = Math.sin(homeToFutureTargetAzmuth)*speed*0.8;
   let res;
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
