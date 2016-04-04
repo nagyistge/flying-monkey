@@ -64,20 +64,85 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
+/*
   if(speed > 0.15 || planData.home.speed > 0.15)
   {
     threeDR.setVelocity(vn,ve,0);
     threeDR.setYaw(yaw);
   }
   else threeDR.setYaw(yaw);
+  */
+});
+
+const assemblePlanData = Promise.coroutine(function *()
+{
+  mTime = (new Date()).valueOf();
+
+  let homeState = goal.home;
+  let targetState = goal.target;
+  let keyState = goal.key;
+  let latencyFactor = (mTime - goal.millis)/1000;
+
+  if(latencyFactor > 1) latencyFactor = 1;
+
+  let homeUpdated = yield numerics.destination(homeState.lat,homeState.long,homeState.azmuth,homeState.speed*latencyFactor);
+  let keyUpdated = yield numerics.destination(keyState.lat,keyState.long,homeState.azmuth,keyState.speed*latencyFactor);
+  let targetUpdated;
+
+  if(targetState != null) targetUpdated = yield numerics.destination(targetState.lat,targetState.long,targetState.azmuth,targetState.speed*latencyFactor);
+
+  //console.log(`latencyFactor = ${latencyFactor} compensation: hs = ${homeState.speed*latencyFactor} ts = ${targetState.speed*latencyFactor} ks = ${keyState.speed*latencyFactor}`)
+
+  let planData =
+  {
+    home:
+    {
+      lat:homeUpdated[0],
+      long:homeUpdated[1],
+      alt:homeState.alt,
+      vLat:homeState.vLat,
+      vLong:homeState.vLong,
+      vAlt:homeState.vAlt,
+      speed:homeState.speed,
+      azmuth:homeState.asmuth
+    },
+    key:
+    {
+      lat:keyUpdated[0],
+      long:keyUpdated[1],
+      alt:keyState.alt,
+      vLat:keyState.vLat,
+      vLong:keyState.vLong,
+      vAlt:keyState.vAlt,
+      speed:keyState.speed,
+      azmuth:keyState.azmuth
+    }
+  };
+
+  if(targetState != null)
+  {
+    planData.target =
+    {
+      lat:targetUpdated[0],
+      long:targetUpdated[1],
+      alt:targetState.alt,
+      vLat:targetState.vLat,
+      vLong:targetState.vLong,
+      vAlt:targetState.vAlt,
+      speed:targetState.speed,
+      azmuth:targetState.azmuth
+    }
+  }
+  return planData;
 });
 
 const manuver = Promise.coroutine(function *()
 {
   let modeName = threeDR.modeName();
 
-  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null && threeDR.isArmed())
+  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null)// && threeDR.isArmed())
   {
+    /*
     if(modeName != 'GUIDED')
     {
       if(modePending == null)
@@ -88,55 +153,10 @@ const manuver = Promise.coroutine(function *()
         modePending = null;
       }
     }
-
+    */
     if(goal.plan == "parallel")
     {
-      mTime = (new Date()).valueOf();
-
-      let homeState = goal.home;
-      let targetState = goal.target;
-      let keyState = goal.key;
-      let latencyFactor = (mTime - goal.millis)/1000;
-      let homeUpdated = yield numerics.destination(homeState.lat,homeState.long,homeState.azmuth,homeState.speed*latencyFactor);
-      let targetUpdated = yield numerics.destination(targetState.lat,targetState.long,targetState.azmuth,homeState.speed*latencyFactor);
-      let keyUpdated = yield numerics.destination(keyState.lat,keyState.long,homeState.azmuth,keyState.speed*latencyFactor);
-
-      let planData =
-      {
-        home:
-        {
-          lat:homeUpdated[0],
-          long:homeUpdated[1],
-          alt:homeState.alt,
-          vLat:homeState.vLat,
-          vLong:homeState.vLong,
-          vAlt:homeState.vAlt,
-          speed:homeState.speed,
-          azmuth:homeState.asmuth
-        },
-        target:
-        {
-          lat:targetUpdated[0],
-          long:targetUpdated[1],
-          alt:targetState.alt,
-          vLat:targetState.vLat,
-          vLong:targetState.vLong,
-          vAlt:targetState.vAlt,
-          speed:targetState.speed,
-          azmuth:targetState.azmuth
-        },
-        key:
-        {
-          lat:keyUpdated[0],
-          long:keyUpdated[1],
-          alt:keyState.alt,
-          vLat:keyState.vLat,
-          vLong:keyState.vLong,
-          vAlt:keyState.vAlt,
-          speed:keyState.speed,
-          azmuth:keyState.azmuth
-        }
-      };
+      let planData = yield assemblePlanData();
 
       yield planParallelCourse(planData);
     }
@@ -155,24 +175,31 @@ const manuver = Promise.coroutine(function *()
 
 setInterval(manuver,200);
 
-const doTrack = Promise.coroutine(function *()
+const updateGoal = Promise.coroutine(function *()
 {
   let target = gpsDB.getLoc('x');
   let key = gpsDB.getLoc(keyId);
 
-  if(target && target.src.current && home && home.src.current && key && key.src.current)
+  if(home && home.src.current && key && key.src.current)
   {
     let goalSerial = goal.serial;
     let now = new Date();
     let homeState = home.src.current;
-    let targetState = target.src.current;
-    let keyState = key.src.current;
     let homeSpeed = yield numerics.haversine(homeState.lat,homeState.long,homeState.lat + homeState.vLat,homeState.long + homeState.vLong);
-    let targetSpeed = yield numerics.haversine(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
-    let keySpeed = yield numerics.haversine(keyState.lat,keyState.long,keyState.lat + keyState.vLat,keyState.long + keyState.vLong);
     let homeAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,homeState.lat + homeState.vLat,homeState.long + homeState.vLong);
-    let targetAzmuth = yield numerics.forwardAzmuth(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
+    let keyState = key.src.current;
+    let keySpeed = yield numerics.haversine(keyState.lat,keyState.long,keyState.lat + keyState.vLat,keyState.long + keyState.vLong);
     let keyAzmuth = yield numerics.forwardAzmuth(keyState.lat,keyState.long,keyState.lat + keyState.vLat,keyState.long + keyState.vLong);
+    let targetState;
+    let targetSpeed;
+    let targetAzmuth;
+
+    if(target && target.src.current)
+    {
+      targetState = target.src.current;
+      targetSpeed = yield numerics.haversine(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
+      targetAzmuth = yield numerics.forwardAzmuth(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
+    }
 
     if(goalSerial == goal.serial)
     {
@@ -189,17 +216,6 @@ const doTrack = Promise.coroutine(function *()
         speed:homeSpeed,
         azmuth:homeAzmuth
       };
-      goal.target =
-      {
-        lat:targetState.lat,
-        long:targetState.long,
-        alt:targetState.alt,
-        vLat:targetState.vLat,
-        vLong:targetState.vLong,
-        vAlt:targetState.vAlt,
-        speed:targetSpeed,
-        azmuth:targetAzmuth
-      };
       goal.key =
       {
         lat:keyState.lat,
@@ -211,6 +227,20 @@ const doTrack = Promise.coroutine(function *()
         speed:keySpeed,
         azmuth:keyAzmuth
       };
+      if(target && target.src.current)
+      {
+        goal.target =
+        {
+          lat:targetState.lat,
+          long:targetState.long,
+          alt:targetState.alt,
+          vLat:targetState.vLat,
+          vLong:targetState.vLong,
+          vAlt:targetState.vAlt,
+          speed:targetSpeed,
+          azmuth:targetAzmuth
+        };
+      }
     }
   }
 });
@@ -221,59 +251,64 @@ gpsDB.addUpdate('*',Promise.coroutine(function *(gpsObj,prev)
 
   home = gpsObj;
   if(isRecording) recordFlightData(gpsObj,now);
-  if(isManuvering) yield doTrack();
+  if(isManuvering && goal.plan != null) yield updateGoal();
 }));
 
-const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
+const updateParallelTarget = Promise.coroutine(function *(gpsObj)
 {
   let now = new Date();
 
+  if(separationVectors[gpsObj.id] == null)
+  {
+    let azmuth = yield numerics.forwardAzmuth(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
+    let distance = yield numerics.haversine(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
+
+/*
+    separationVectors[gpsObj.id] =
+    {
+      azmuth:azmuth,
+      distance:distance,
+      alt:home.src.current.alt - gpsObj.src.current.alt
+    };
+*/
+
+    separationVectors[gpsObj.id] =
+    {
+      vector:[home.src.current.lat - gpsObj.src.current.lat,home.src.current.long - gpsObj.src.current.long,home.src.current.alt - gpsObj.src.current.alt]
+    };
+
+    gpsDB.addGPSCoord("x","target",now.valueOf(),home.src.current.lat,home.src.current.long,home.src.current.alt);
+  }
+  else
+  {
+    let translated =
+    {
+      lat:gpsObj.src.current.lat + separationVectors[gpsObj.id].vector[0],
+      long:gpsObj.src.current.long + separationVectors[gpsObj.id].vector[1],
+      alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].vector[2]
+    };
+
+/*
+    let LL = yield numerics.destination(gpsObj.src.current.lat,gpsObj.src.current.long,separationVectors[gpsObj.id].azmuth,separationVectors[gpsObj.id].distance);
+
+    let translated =
+    {
+      lat:LL[0],
+      long:LL[1],
+      alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].alt
+    };
+*/
+
+    gpsDB.addGPSCoord("x","target",now.valueOf(),translated.lat,translated.long,translated.alt);
+  }
+});
+
+const deviceUpdate = Promise.coroutine(function *(gpsObj,prev)
+{
   if(home != null && keyId == gpsObj.id)
   {
-    if(separationVectors[gpsObj.id] == null)
-    {
-      let azmuth = yield numerics.forwardAzmuth(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
-      let distance = yield numerics.haversine(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
-
-/*
-      separationVectors[gpsObj.id] =
-      {
-        azmuth:azmuth,
-        distance:distance,
-        alt:home.src.current.alt - gpsObj.src.current.alt
-      };
-*/
-
-      separationVectors[gpsObj.id] =
-      {
-        vector:[home.src.current.lat - gpsObj.src.current.lat,home.src.current.long - gpsObj.src.current.long,home.src.current.alt - gpsObj.src.current.alt]
-      };
-
-      gpsDB.addGPSCoord("x","target",now.valueOf(),home.src.current.lat,home.src.current.long,home.src.current.alt);
-    }
-    else
-    {
-      let translated =
-      {
-        lat:gpsObj.src.current.lat + separationVectors[gpsObj.id].vector[0],
-        long:gpsObj.src.current.long + separationVectors[gpsObj.id].vector[1],
-        alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].vector[2]
-      };
-
-/*
-      let LL = yield numerics.destination(gpsObj.src.current.lat,gpsObj.src.current.long,separationVectors[gpsObj.id].azmuth,separationVectors[gpsObj.id].distance);
-
-      let translated =
-      {
-        lat:LL[0],
-        long:LL[1],
-        alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].alt
-      };
-*/
-
-      gpsDB.addGPSCoord("x","target",now.valueOf(),translated.lat,translated.long,translated.alt);
-      if(isManuvering) yield doTrack();
-    }
+    if(goal.plan == "parallel") yield updateParallelTarget(gpsObj);
+    if(goal.plan != null) updateGoal();
   }
 });
 
@@ -324,6 +359,14 @@ module.exports =
   {
     if(keyId != null) gpsDB.clearUpdates(keyId);
     goal.plan = "parallel";
+    keyId = id;
+    separationVectors[id] = null;
+    gpsDB.addUpdate(id,deviceUpdate);
+  },
+  tether: function(id)
+  {
+    if(keyId != null) gpsDB.clearUpdates(keyId);
+    goal.plan = "tether";
     keyId = id;
     separationVectors[id] = null;
     gpsDB.addUpdate(id,deviceUpdate);
