@@ -64,14 +64,12 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
-/*
   if(speed > 0.15 || planData.home.speed > 0.15)
   {
     threeDR.setVelocity(vn,ve,0);
     threeDR.setYaw(yaw);
   }
   else threeDR.setYaw(yaw);
-  */
 });
 
 const assemblePlanData = Promise.coroutine(function *()
@@ -140,9 +138,8 @@ const manuver = Promise.coroutine(function *()
 {
   let modeName = threeDR.modeName();
 
-  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null)// && threeDR.isArmed())
+  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null && threeDR.isArmed())
   {
-    /*
     if(modeName != 'GUIDED')
     {
       if(modePending == null)
@@ -153,7 +150,7 @@ const manuver = Promise.coroutine(function *()
         modePending = null;
       }
     }
-    */
+
     if(goal.plan == "parallel")
     {
       let planData = yield assemblePlanData();
