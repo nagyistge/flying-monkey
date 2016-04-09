@@ -128,6 +128,21 @@ const navRTL = Promise.promisify(function(url,callback)
   });
 });
 
+const navTether = Promise.promisify(function(url,id,callback)
+{
+  request.post({
+    url: url + 'nav/tether',
+    json: true,
+    body:
+    {
+      device: { deviceId:id }
+    }
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const navTrack = Promise.promisify(function(url,callback)
 {
   request.post({
@@ -197,6 +212,11 @@ const send = Promise.coroutine(function*(url,id,name,lat,long,alt,serial)
   yield coordSend(url,id,name,now.valueOf(),lat,long,alt,serial);
 });
 
+const tether = Promise.coroutine(function*(url,id)
+{
+  return yield navTether(url,id);
+});
+
 const track = Promise.coroutine(function*(url)
 {
   return yield navTrack(url);
@@ -218,6 +238,7 @@ module.exports =
   rtl:rtl,
   reset:reset,
   send:send,
+  tether:tether,
   track:track,
   untrack:untrack
 };

@@ -1,6 +1,6 @@
 module nav_geo
 
-export haversine,forwardAzmuth,destination,speed
+export haversine,forwardAzmuth,destination,speed,deltaF
 
 function earthRadius(lat)
    a =  6378137.0;
@@ -40,20 +40,31 @@ function forwardAzmuth(args::Array{Float64})
 end
 
 function destination(args::Array{Float64})
-  res = Array(Float64,2);
-  srcLat = args[1]*pi/180;
-  srcLong = args[2]*pi/180;
-  azmuth = args[3]
-  distanceInMeters = args[4];
-  distanceInRadians = distanceInMeters/earthRadius(args[1]);
-  destLat = asin(sin(srcLat)*cos(distanceInRadians) + cos(srcLat)*sin(distanceInRadians)*cos(azmuth));
-  dlong = atan2(sin(azmuth)*sin(distanceInRadians)*cos(srcLat),cos(distanceInRadians) - sin(srcLat)*sin(destLat));
-  destLong = (srcLong - dlong + pi) % (2*pi) - pi;
-  res[1] = destLat*180/pi;
-  res[2] = destLong*180/pi;
-  return res;
+   res = Array(Float64,2);
+   srcLat = args[1]*pi/180;
+   srcLong = args[2]*pi/180;
+   azmuth = args[3]
+   distanceInMeters = args[4];
+   distanceInRadians = distanceInMeters/earthRadius(args[1]);
+   destLat = asin(sin(srcLat)*cos(distanceInRadians) + cos(srcLat)*sin(distanceInRadians)*cos(azmuth));
+   dlong = srcLong + atan2(sin(azmuth)*sin(distanceInRadians)*cos(srcLat),cos(distanceInRadians) - sin(srcLat)*sin(destLat));
+   destLong = (dlong + 3*pi) % (2*pi) - pi;
+   res[1] = destLat*180/pi;
+   res[2] = destLong*180/pi;
+   return res;
 end
 
 speed(x) = 7*(2/(1 + e^-(abs(x/10)^(5/4))) - 1)
+
+function deltaF(args::Array{Float64})
+   gradient = Array(Float64,2);
+
+   r = args[1];
+   theta = args[2];
+   s = args[3];
+   gradient[1] = -2*r*(s/(s + 1)*e^-(2*r/(s + 1))*(2 - 0.5*cos(theta + pi))  + 2*e^-(0.25*r^2)) + 1;
+   gradient[2] = 0.5*s*e^-(2*r/(s + 1))*sin(theta);
+   return gradient;
+end
 
 end

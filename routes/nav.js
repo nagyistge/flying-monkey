@@ -66,6 +66,21 @@ router.post('/rtl',function(req,res,next)
   res.status(200).send('OK');
 });
 
+router.post('/tether',function(req,res,next)
+{
+  if(req.body.device)
+  {
+    let device = null;
+
+    if(typeof req.body.device == "string") device = JSON.parse(req.body.device);
+    else device = req.body.device;
+    console.log("tether: ",device.deviceId);
+    nav.tether(device.deviceId);
+    res.status(200).send('OK');
+  }
+  else next();
+});
+
 router.post('/track',function(req,res,next)
 {
   console.log("track");

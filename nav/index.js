@@ -24,12 +24,6 @@ function recordFlightData(gpsObj,now)
   flight.current.push({ lat:gpsObj.src.current.lat, long:gpsObj.src.current.long, alt:gpsObj.src.current.alt, millis:now.valueOf() });
 }
 
-function queueManuver(command)
-{
-  manuverCommands.push(command);
-  queueIndex++;
-}
-
 const planParallelCourse = Promise.coroutine(function *(planData)
 {
   let destLat = planData.target.lat;
@@ -72,6 +66,55 @@ const planParallelCourse = Promise.coroutine(function *(planData)
   else threeDR.setYaw(yaw);
 });
 
+const planTetheredCourse = Promise.coroutine(function *(planData)
+{
+  let keyToHomeAzmuth = yield numerics.forwardAzmuth(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
+  let r = yield numerics.haversine(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
+  let s = 0;
+  let theta = 0;
+  let vn = 0,ve = 0;
+
+  if(keyToHomeAzmuth < 0) keyToHomeAzmuth += 2*Math.PI;
+  if(!isNaN(planData.home.azmuth))
+  {
+    vn = Math.cos(planData.home.azmuth)*planData.home.speed;
+    ve = Math.sin(planData.home.azmuth)*planData.home.speed;
+  }
+
+  if(!isNaN(planData.key.speed))
+  {
+    s = planData.key.speed;
+    theta = keyToHomeAzmuth - planData.key.azmuth;
+    if(theta < 0) theta += 2*Math.PI;
+  }
+
+  let deltaF = yield numerics.deltaF(r,theta,s);
+  let LL = yield numerics.destination(planData.key.lat,planData.key.long,keyToHomeAzmuth - deltaF[1],r - deltaF[0]);
+  let targetAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,LL[0],LL[1]);
+  let targetDistance = yield numerics.haversine(planData.home.lat,planData.home.long,LL[0],LL[1]);
+  let now = new Date();
+  let yaw = homeToKeyAzmuth*180/Math.PI;
+
+  gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
+
+  //console.log(`r = ${r} ktoha = ${keyToHomeAzmuth*180/Math.PI} ka = ${planData.key.azmuth*180/Math.PI} theta = ${theta*180/Math.PI} s = ${s} deltaF = ${deltaF} LL = ${LL}`);
+  //console.log(`r = ${r} ktoha = ${keyToHomeAzmuth*180/Math.PI} ka = ${planData.key.azmuth*180/Math.PI} theta = ${theta*180/Math.PI}`);
+  //console.log(`s = ${s} deltaF = ${deltaF} LL = ${LL} targetAzmuth = ${targetAzmuth} targetDistance = ${targetDistance}`);
+  //console.log(`homeLat = ${planData.home.lat} homeLong = ${planData.home.long} keyLat = ${planData.key.lat} keyLong = ${planData.key.long}`)
+
+  vn += 0.4*Math.cos(targetAzmuth)*targetDistance;
+  ve += 0.4*Math.sin(targetAzmuth)*targetDistance;
+
+  console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
+
+  if(speed > 0.15 || planData.home.speed > 0.15)
+  {
+    threeDR.setVelocity(vn,ve,0);
+    threeDR.setYaw(yaw);
+  }
+  else threeDR.setYaw(yaw);
+});
+
 const assemblePlanData = Promise.coroutine(function *()
 {
   mTime = (new Date()).valueOf();
@@ -84,7 +127,7 @@ const assemblePlanData = Promise.coroutine(function *()
   if(latencyFactor > 1) latencyFactor = 1;
 
   let homeUpdated = yield numerics.destination(homeState.lat,homeState.long,homeState.azmuth,homeState.speed*latencyFactor);
-  let keyUpdated = yield numerics.destination(keyState.lat,keyState.long,homeState.azmuth,keyState.speed*latencyFactor);
+  let keyUpdated = yield numerics.destination(keyState.lat,keyState.long,keyState.azmuth,keyState.speed*latencyFactor);
   let targetUpdated;
 
   if(targetState != null) targetUpdated = yield numerics.destination(targetState.lat,targetState.long,targetState.azmuth,targetState.speed*latencyFactor);
@@ -157,6 +200,12 @@ const manuver = Promise.coroutine(function *()
 
       yield planParallelCourse(planData);
     }
+    else if(goal.plan == "tether")
+    {
+      let planData = yield assemblePlanData();
+
+      yield planTetheredCourse(planData);
+    }
   }
   else if(!isManuvering || modeName == 'RTL')
   {
@@ -191,11 +240,14 @@ const updateGoal = Promise.coroutine(function *()
     let targetSpeed;
     let targetAzmuth;
 
+    if(homeAzmuth < 0) homeAzmuth += 2*Math.PI;
+    if(keyAzmuth < 0) keyAzmuth += 2*Math.PI;
     if(target && target.src.current)
     {
       targetState = target.src.current;
       targetSpeed = yield numerics.haversine(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
       targetAzmuth = yield numerics.forwardAzmuth(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
+      if(targetAzmuth < 0) targetAzmuth += 2*Math.PI;
     }
 
     if(goalSerial == goal.serial)
@@ -257,35 +309,36 @@ const updateParallelTarget = Promise.coroutine(function *(gpsObj)
 
   if(separationVectors[gpsObj.id] == null)
   {
-    let azmuth = yield numerics.forwardAzmuth(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
-    let distance = yield numerics.haversine(home.src.current.lat,home.src.current.long,gpsObj.src.current.lat,gpsObj.src.current.long);
+    let azmuth = yield numerics.forwardAzmuth(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
+    let distance = yield numerics.haversine(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
 
-/*
     separationVectors[gpsObj.id] =
     {
       azmuth:azmuth,
       distance:distance,
       alt:home.src.current.alt - gpsObj.src.current.alt
     };
-*/
 
+/*
     separationVectors[gpsObj.id] =
     {
       vector:[home.src.current.lat - gpsObj.src.current.lat,home.src.current.long - gpsObj.src.current.long,home.src.current.alt - gpsObj.src.current.alt]
     };
+    */
 
     gpsDB.addGPSCoord("x","target",now.valueOf(),home.src.current.lat,home.src.current.long,home.src.current.alt);
   }
   else
   {
+    /*
     let translated =
     {
       lat:gpsObj.src.current.lat + separationVectors[gpsObj.id].vector[0],
       long:gpsObj.src.current.long + separationVectors[gpsObj.id].vector[1],
       alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].vector[2]
     };
+    */
 
-/*
     let LL = yield numerics.destination(gpsObj.src.current.lat,gpsObj.src.current.long,separationVectors[gpsObj.id].azmuth,separationVectors[gpsObj.id].distance);
 
     let translated =
@@ -294,7 +347,6 @@ const updateParallelTarget = Promise.coroutine(function *(gpsObj)
       long:LL[1],
       alt:gpsObj.src.current.alt + separationVectors[gpsObj.id].alt
     };
-*/
 
     gpsDB.addGPSCoord("x","target",now.valueOf(),translated.lat,translated.long,translated.alt);
   }

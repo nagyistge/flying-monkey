@@ -37,31 +37,14 @@ const nav_geo = julia.import('./numerics/nav_geo');
 
 module.exports =
 {
-  kalmanInitialGuess: Promise.promisify(kalman.initialGuess),
-  kalmanNewModel: Promise.promisify(kalman.newModel),
-  kalmanPredict: Promise.promisify(kalman.predict),
-  kalmanStateMean: Promise.promisify(kalman.extractMeanFromState),
-  kalmanStateVariance: Promise.promisify(kalman.extractVarianceFromState),
-  kalmanUpdate: Promise.promisify(kalman.update),
-  haversine: Promise.promisify(function(lat1,long1,lat2,long2,done)
+  deltaF: Promise.promisify(function(r,theta,s,done)
   {
-    let args = new Float64Array(4);
+    let args = new Float64Array(3);
 
-    args[0] = lat1;
-    args[1] = long1;
-    args[2] = lat2;
-    args[3] = long2;
-    nav_geo.haversine(args,done);
-  }),
-  forwardAzmuth: Promise.promisify(function(lat1,long1,lat2,long2,done)
-  {
-    let args = new Float64Array(4);
-
-    args[0] = lat1;
-    args[1] = long1;
-    args[2] = lat2;
-    args[3] = long2;
-    nav_geo.forwardAzmuth(args,done);
+    args[0] = r;
+    args[1] = theta;
+    args[2] = s;
+    nav_geo.deltaF(args,done);
   }),
   destination: Promise.promisify(function(lat,long,azmuth,distance,done)
   {
@@ -73,5 +56,31 @@ module.exports =
     args[3] = distance;
     nav_geo.destination(args,done);
   }),
+  forwardAzmuth: Promise.promisify(function(lat1,long1,lat2,long2,done)
+  {
+    let args = new Float64Array(4);
+
+    args[0] = lat1;
+    args[1] = long1;
+    args[2] = lat2;
+    args[3] = long2;
+    nav_geo.forwardAzmuth(args,done);
+  }),
+  haversine: Promise.promisify(function(lat1,long1,lat2,long2,done)
+  {
+    let args = new Float64Array(4);
+
+    args[0] = lat1;
+    args[1] = long1;
+    args[2] = lat2;
+    args[3] = long2;
+    nav_geo.haversine(args,done);
+  }),
+  kalmanInitialGuess: Promise.promisify(kalman.initialGuess),
+  kalmanNewModel: Promise.promisify(kalman.newModel),
+  kalmanPredict: Promise.promisify(kalman.predict),
+  kalmanStateMean: Promise.promisify(kalman.extractMeanFromState),
+  kalmanStateVariance: Promise.promisify(kalman.extractVarianceFromState),
+  kalmanUpdate: Promise.promisify(kalman.update),
   speed: Promise.promisify(nav_geo.speed)
 }
