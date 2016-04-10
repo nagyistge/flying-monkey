@@ -13,6 +13,7 @@ let router =
 let shell;
 let isArmed = false;
 let modeName = null;
+let homeLocation = null;
 
 const init = Promise.promisify(function(done)
 {
@@ -53,6 +54,7 @@ const init = Promise.promisify(function(done)
         isArmed = json.isArmed;
         console.log("isArmed updated to: ",isArmed);
       }
+      else if(json.homeLocation != null) homeLocation = json.homeLocation;
       else if(json.cmd != null) console.log("cmd: ",json.cmd);
     }
     catch(e) {}
@@ -98,6 +100,7 @@ module.exports =
   {
     if(shell != null && isArmed) shell.send("guided");
   },
+  homeLocation:function() { return homeLocation; },
   isArmed:function() { return isArmed; },
   loiter:function()
   {
