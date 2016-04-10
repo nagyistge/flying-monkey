@@ -14,6 +14,7 @@ let isManuvering = false;
 let isRecording = false;
 let flightData = {};
 let mTime = (new Date()).valueOf();
+let homeLocation = null;
 
 function recordFlightData(gpsObj,now)
 {
@@ -23,6 +24,17 @@ function recordFlightData(gpsObj,now)
 
   flight.current.push({ lat:gpsObj.src.current.lat, long:gpsObj.src.current.long, alt:gpsObj.src.current.alt, millis:now.valueOf() });
 }
+
+const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
+{
+  if(homeLocation == null) homeLocationm = threeDR.homeLocation();
+  if(homeLocation != null)
+  {
+    let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
+
+    yield threeDR.rotateGimbal(pitch);
+  }
+});
 
 const planParallelCourse = Promise.coroutine(function *(planData)
 {
@@ -47,6 +59,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
   let homeToFutureTargetDistance = yield numerics.haversine(planData.home.lat,planData.home.long,destLat,destLong);
   let speed = yield numerics.speed(homeToFutureTargetDistance);
   let homeToKeyAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
+  let homeToKeyDistance = yield numerics.haversine(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
 
   if(homeToFutureTargetAzmuth < 0) homeToFutureTargetAzmuth += 2*Math.PI;
   if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
@@ -64,6 +77,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
     threeDR.setYaw(yaw);
   }
   else threeDR.setYaw(yaw);
+  yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -113,6 +127,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
     threeDR.setYaw(yaw);
   }
   else threeDR.setYaw(yaw);
+  yield rotateGimbal(r,planData.home.alt);
 });
 
 const assemblePlanData = Promise.coroutine(function *()

@@ -107,6 +107,10 @@ module.exports =
     if(shell != null && isArmed) shell.send("loiter");
   },
   modeName:function() { return modeName; },
+  rotateGimbal:function(pitch)
+  {
+    if(shell != null) shell.send(`rotateGimbal ${pitch}`);
+  },
   rtl:function()
   {
     if(shell != null && isArmed) shell.send("rtl");

@@ -34,14 +34,19 @@ def process_command(command,vehicle):
    elif x[0] == "guided":
       vehicle.mode = dronekit.VehicleMode("GUIDED")
       print(json.dumps({ 'cmd':'guided' }))
-   elif x[0] == "rtl":
-      vehicle.mode = dronekit.VehicleMode("RTL")
-      print(json.dumps({ 'cmd':'rtl' }))
    elif x[0] == "loiter":
       vehicle.mode = dronekit.VehicleMode("LOITER")
       print(json.dumps({ 'cmd':'loiter' }))
    elif x[0] == "mode":
       print(json.dumps({ 'modeName':vehicle.mode.name }))
+   elif x[0] == "rotateGimbal":
+      pitch = float(x[1])
+      cmd_str = "gimbal " + str(pitch)
+      vehicle.gimbal.rotate(pitch,0,0)
+      print(json.dumps({ 'cmd':cmd_str }))
+   elif x[0] == "rtl":
+      vehicle.mode = dronekit.VehicleMode("RTL")
+      print(json.dumps({ 'cmd':'rtl' }))
    elif x[0] == "setVelocity":
       vn = float(x[1])
       ve = float(x[2])
