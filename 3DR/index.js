@@ -59,6 +59,7 @@ const init = Promise.promisify(function(done)
       }
       else if(json.homeLocation != null)
       {
+<<<<<<< HEAD
         homeLocation = json.homeLocation;
 
         console.log("homeLocation set to: ",homeLocation);
@@ -91,6 +92,10 @@ const init = Promise.promisify(function(done)
           router['attitude'] = [];
           for(let i = 0;i < callbackList.length;i++) callbackList[i](attitude);
         }
+=======
+         homeLocation = json.homeLocation;
+         console.log("home loc = ",homeLocation);
+>>>>>>> f4bca9d6e113eea56a53732867d7b14d00bd42d1
       }
       else if(json.cmd != null) console.log("cmd: ",json.cmd);
     }
