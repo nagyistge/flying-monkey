@@ -7,7 +7,10 @@ const gpsDB = require('../gpsDB');
 let router =
 {
   RTL: [],
-  GUIDED: []
+  GUIDED: [],
+  attitude: [],
+  homeLocation: [],
+  velocity: []
 };
 
 let shell;
@@ -54,7 +57,41 @@ const init = Promise.promisify(function(done)
         isArmed = json.isArmed;
         console.log("isArmed updated to: ",isArmed);
       }
-      else if(json.homeLocation != null) homeLocation = json.homeLocation;
+      else if(json.homeLocation != null)
+      {
+        homeLocation = json.homeLocation;
+
+        console.log("homeLocation set to: ",homeLocation);
+        let callbackList = router['homeLocatoin'];
+
+        if(callbackList != null)
+        {
+          router[homeLocation] = [];
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](homeLocation);
+        }
+      }
+      else if(json.velocity != null)
+      {
+        let velocity = { vn:json.velocity.vx, ve:json.velocity.vy, vd:json.velocity.vz };
+        let callbackList = router['velocity'];
+
+        if(callbackList != null)
+        {
+          router['velocity'] = [];
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](velocity);
+        }
+      }
+      else if(json.attitude != null)
+      {
+        let attitude = json.attitude;
+        let callbackList = router['attitude'];
+
+        if(callbackList != null)
+        {
+          router['attitude'] = [];
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](attitude);
+        }
+      }
       else if(json.cmd != null) console.log("cmd: ",json.cmd);
     }
     catch(e) {}
@@ -90,8 +127,31 @@ const waitForMode = Promise.promisify(function(targetModeName,done)
   }
 });
 
+const getVariable = Promise.promisify(function(variableName,done)
+{
+  if(shell != null)
+  {
+    let callbackList = router[variableName];
+
+    if(callbackList != null) callbackList.push(done);
+  }
+});
+
 module.exports =
 {
+  getAttitude:Promise.coroutine(function *()
+  {
+    return yield getVariable('attitude');
+  }),
+  getHomeLocation:Promise.coroutine(function *()
+  {
+    if(homeLocation != null) return homeLocation;
+    return yield getVariable('homeLocation');
+  }),
+  getVelocity:Promise.coroutine(function *()
+  {
+    return yield getVariable('velocity');
+  }),
   goto:function(lat,long,alt,speed)
   {
     if(shell != null && isArmed) shell.send(`goto ${lat} ${long} ${alt} ${speed}`);
@@ -100,7 +160,7 @@ module.exports =
   {
     if(shell != null && isArmed) shell.send("guided");
   },
-  homeLocation:function() { return homeLocation; },
+
   isArmed:function() { return isArmed; },
   loiter:function()
   {

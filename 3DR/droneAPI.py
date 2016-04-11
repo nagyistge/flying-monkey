@@ -9,8 +9,6 @@ def attribute_callback(self,attr_name,value):
         print(json.dumps({ 'gpsCoords':{ 'lat':value.lat, 'long':value.lon, 'alt':value.alt }}))
      elif attr_name == 'mode': print(json.dumps({ 'modeName':value.name }))
      elif attr_name == 'armed': print(json.dumps({ 'isArmed':value }))
-     elif attr_name == 'home_location': print(json.dumps({ 'homeLocation':value }))
-
 
 def send_ned_velocity(vehicle,vn,ve,vd):
    msg = vehicle.message_factory.set_position_target_local_ned_encode(0,0,0,FRAME_LOCAL_NED,0b0000111111000111,0,0,0,vn,ve,vd,0,0,0,0,0)
@@ -22,7 +20,13 @@ def condition_yaw(vehicle,heading):
 
 def process_command(command,vehicle):
    x = command.split();
-   if x[0] == "goto":
+   if x[0] == "getAttitude":
+      print(json.dumps({ 'attitude':vehicle.attitude }))
+   elif x[0] == "getHomeLocation":
+      print(json.dumps({ 'homeLocation':vehicle.home_location }))
+   elif x[0] == "getVelocity":
+      print(json.dumps({ 'velocity':vehicle.velocity }))
+   elif x[0] == "goto":
       coord_lat = float(x[1])
       coord_long = float(x[2])
       coord_alt = float(x[3])
@@ -60,8 +64,6 @@ def process_command(command,vehicle):
       print(json.dumps({ 'cmd':cmd_str }))
       condition_yaw(vehicle,heading)
 
-
-
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
 def main():
    target = "udpin:0.0.0.0:14550"
@@ -69,7 +71,6 @@ def main():
    vehicle.add_attribute_listener('location.global_frame',attribute_callback)
    vehicle.add_attribute_listener('mode',attribute_callback)
    vehicle.add_attribute_listener('armed',attribute_callback)
-   vehicle.add_attribute_listener('home_location',attribute_callback)
    while 1:
       line = ""
       for c in raw_input():

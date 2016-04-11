@@ -1,6 +1,6 @@
 module nav_geo
 
-export haversine,forwardAzmuth,destination,speed,deltaF
+export haversine,forwardAzmuth,destination,speed,deltaF,cosineSimilarity
 
 function earthRadius(lat)
    a =  6378137.0;
@@ -66,5 +66,7 @@ function deltaF(args::Array{Float64})
    gradient[2] = 0.5*s*e^-(2*r/(s + 1))*sin(theta);
    return gradient;
 end
+
+cosineSimilarity(a,b) = (a' * b)/(norm(a)*norm(b))
 
 end

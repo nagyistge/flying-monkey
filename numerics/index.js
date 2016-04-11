@@ -37,6 +37,19 @@ const nav_geo = julia.import('./numerics/nav_geo');
 
 module.exports =
 {
+  compareVelocity: Promise.promisify(function(v1,v2)
+  {
+    let a = new Float64Array(3);
+    let b = new Float64Array(3);
+
+    a[0] = v1.vn;
+    a[1] = v1.ve;
+    a[2] = v1.vd;
+    b[0] = v2.vn;
+    b[1] = v2.ve;
+    b[2] = v2.vd;
+    nav_geo.haversine(a,b,done);
+  }),
   deltaF: Promise.promisify(function(r,theta,s,done)
   {
     let args = new Float64Array(3);

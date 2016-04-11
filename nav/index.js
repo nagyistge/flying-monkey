@@ -15,6 +15,8 @@ let isRecording = false;
 let flightData = {};
 let mTime = (new Date()).valueOf();
 let homeLocation = null;
+let targetYaw = null;
+let targetVelocity = null;
 
 function recordFlightData(gpsObj,now)
 {
@@ -27,14 +29,48 @@ function recordFlightData(gpsObj,now)
 
 const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
 {
-  if(homeLocation == null) homeLocation = threeDR.homeLocation();
+  if(homeLocation == null) homeLocation = yield threeDR.getHomeLocation();
   if(homeLocation != null)
   {
     let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
 
-    yield threeDR.rotateGimbal(pitch);
+    threeDR.rotateGimbal(pitch);
   }
 });
+
+const canSetVelocity = Promise.coroutine(function *(newVelocity)
+{
+  if(targetVelocity == null) return true;
+
+  let similarity = yield numerics.compareVelocity(newVelocity,targetVelocity);
+
+  if(simiarlity >= 0.997) return false;
+
+  let currentVelocity = yield threeDR.getVelocity();
+
+  similarity = yield numerics.compareVelocity(currentVelocity,targetVelocity);
+  if(simiarlity >= 0.999) return false;
+  return true;
+});
+
+const canSetYaw = Promise.coroutine(function *(newYaw)
+{
+  if(targetYaw == null) return true;
+
+  let yawDiff = targetYaw - newYaw;
+
+  if(yawDiff < 0) yawDiff += 360;
+  if(yawDiff < 5) return false;
+
+  let currentAttitude = yield threeDR.getAttitude();
+
+  yawDiff = currentAttitude.yaw*180/Math.PI - targetYaw;
+
+  if(yawDiff < 0) yawDiff += 360;
+  if(yawDiff > 3) return false;
+  return true;
+});
+
 
 const planParallelCourse = Promise.coroutine(function *(planData)
 {
@@ -124,8 +160,8 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
-  threeDR.setVelocity(vn,ve,0);
-  threeDR.setYaw(yaw);
+  if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
+  if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
   //yield rotateGimbal(r,planData.home.alt);
 });
 
