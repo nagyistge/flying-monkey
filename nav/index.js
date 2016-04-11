@@ -15,6 +15,7 @@ let isRecording = false;
 let flightData = {};
 let mTime = (new Date()).valueOf();
 let homeLocation = null;
+let commandCount = 0;
 
 function recordFlightData(gpsObj,now)
 {
@@ -126,7 +127,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   threeDR.setVelocity(vn,ve,0);
   threeDR.setYaw(yaw);
-  //yield rotateGimbal(r,planData.home.alt);
+  //if((gimbalCount++ % 8) == 0) yield rotateGimbal(r,planData.home.alt);
 });
 
 const assemblePlanData = Promise.coroutine(function *()

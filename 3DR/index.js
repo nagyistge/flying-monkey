@@ -54,7 +54,11 @@ const init = Promise.promisify(function(done)
         isArmed = json.isArmed;
         console.log("isArmed updated to: ",isArmed);
       }
-      else if(json.homeLocation != null) homeLocation = json.homeLocation;
+      else if(json.homeLocation != null)
+      {
+         homeLocation = json.homeLocation;
+         console.log("home loc = ",homeLocation);
+      }
       else if(json.cmd != null) console.log("cmd: ",json.cmd);
     }
     catch(e) {}
