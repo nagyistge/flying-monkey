@@ -113,7 +113,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
     threeDR.setYaw(yaw);
   }
   else threeDR.setYaw(yaw);
-  yield rotateGimbal(homeToKeyDistance,planData.home.alt);
+  //yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -162,7 +162,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  //yield rotateGimbal(r,planData.home.alt);
+  //if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
 });
 
 const assemblePlanData = Promise.coroutine(function *()
