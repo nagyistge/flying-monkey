@@ -50,14 +50,23 @@ module.exports =
     b[2] = v2.vd;
     nav_geo.haversine(a,b,done);
   }),
-  deltaF: Promise.promisify(function(r,theta,s,done)
+  deltaF1: Promise.promisify(function(r,theta,s,done)
   {
     let args = new Float64Array(3);
 
     args[0] = r;
     args[1] = theta;
     args[2] = s;
-    nav_geo.deltaF(args,done);
+    nav_geo.deltaF1(args,done);
+  }),
+  deltaF2: Promise.promisify(function(r,theta,s,done)
+  {
+    let args = new Float64Array(3);
+
+    args[0] = r;
+    args[1] = theta;
+    args[2] = s;
+    nav_geo.deltaF2(args,done);
   }),
   destination: Promise.promisify(function(lat,long,azmuth,distance,done)
   {

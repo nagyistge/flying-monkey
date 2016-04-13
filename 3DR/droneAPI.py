@@ -22,6 +22,8 @@ def process_command(command,vehicle):
    x = command.split();
    if x[0] == "getAttitude":
       print(json.dumps({ 'attitude':vehicle.attitude }))
+   elif x[0] == "getGimbal":
+      print(json.dumps({ 'gimbal':vehicle.gimbal.pitch }))
    elif x[0] == "getHomeLocation":
       print(json.dumps({ 'homeLocation':vehicle.home_location }))
    elif x[0] == "getVelocity":

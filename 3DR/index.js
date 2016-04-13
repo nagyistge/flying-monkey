@@ -9,6 +9,7 @@ let router =
   RTL: [],
   GUIDED: [],
   attitude: [],
+  gimbal: [],
   homeLocation: [],
   velocity: []
 };
@@ -92,6 +93,17 @@ const init = Promise.promisify(function(done)
           for(let i = 0;i < callbackList.length;i++) callbackList[i](attitude);
         }
       }
+      else if(json.gimbal != null)
+      {
+        let gimbal = json.gimbal;
+        let callbackList = router['attitude'];
+
+        if(callbackList != null)
+        {
+          router['gimbal'] = [];
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](gimbal);
+        }
+      }
       else if(json.cmd != null) console.log("cmd: ",json.cmd);
     }
     catch(e) {}
@@ -142,6 +154,10 @@ module.exports =
   getAttitude:Promise.coroutine(function *()
   {
     return yield getVariable('attitude');
+  }),
+  getGimbal:Promise.coroutine(function *()
+  {
+    return yield getVariable('gimbal');
   }),
   getHomeLocation:Promise.coroutine(function *()
   {

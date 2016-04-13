@@ -15,6 +15,7 @@ let isRecording = false;
 let flightData = {};
 let mTime = (new Date()).valueOf();
 let homeLocation = null;
+let targetGimbalPitch = null;
 let targetYaw = null;
 let targetVelocity = null;
 
@@ -29,6 +30,7 @@ function recordFlightData(gpsObj,now)
 
 const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
 {
+  if(alt == null) return;
   if(homeLocation == null) homeLocation = yield threeDR.getHomeLocation();
   if(homeLocation != null)
   {
@@ -36,6 +38,21 @@ const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
 
     threeDR.rotateGimbal(pitch);
   }
+});
+
+const canSetGimbal = Promise.coroutine(function *(newGimbalPitch)
+{
+  if(targetGimbalPitch == null) return true;
+
+  let gimbalPitchDiff = targetGimbalPitch - newGimbalPitch;
+
+  if(gimbalPitchDiff < 5) return false;
+
+  let currentGimbalPitch = yield threeDR.getGimbal();
+
+  gimbalPitchDiff = currentGimbalPitch - targetGimbalPitch;
+  if(gimbalPitchDiff < 3) return false;
+  return true;
 });
 
 const canSetVelocity = Promise.coroutine(function *(newVelocity)
@@ -107,13 +124,9 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
-  if(speed > 0.15 || planData.home.speed > 0.15)
-  {
-    threeDR.setVelocity(vn,ve,0);
-    threeDR.setYaw(yaw);
-  }
-  else threeDR.setYaw(yaw);
-  //yield rotateGimbal(homeToKeyDistance,planData.home.alt);
+  if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
+  if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
+  if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -140,7 +153,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
     if(theta < 0) theta += 2*Math.PI;
   }
 
-  let deltaF = yield numerics.deltaF(r,theta,s);
+  let deltaF = yield numerics.deltaF1(r,theta,s);
   let LL = yield numerics.destination(planData.key.lat,planData.key.long,keyToHomeAzmuth - deltaF[1],r - deltaF[0]);
   let targetAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,LL[0],LL[1]);
   let targetDistance = yield numerics.haversine(planData.home.lat,planData.home.long,LL[0],LL[1]);
@@ -148,7 +161,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let yaw = homeToKeyAzmuth*180/Math.PI;
 
   console.log(`s = ${s} deltaF = ${deltaF}`);
-  //gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
+  gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
 
   //console.log(`r = ${r} ktoha = ${keyToHomeAzmuth*180/Math.PI} ka = ${planData.key.azmuth*180/Math.PI} theta = ${theta*180/Math.PI} s = ${s} deltaF = ${deltaF} LL = ${LL}`);
   //console.log(`r = ${r} ktoha = ${keyToHomeAzmuth*180/Math.PI} ka = ${planData.key.azmuth*180/Math.PI} theta = ${theta*180/Math.PI}`);
@@ -162,7 +175,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  //if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
+  if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
 });
 
 const assemblePlanData = Promise.coroutine(function *()
@@ -231,10 +244,11 @@ const manuver = Promise.coroutine(function *()
 {
   let modeName = threeDR.modeName();
 
-  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null && threeDR.isArmed())
+  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null)// && threeDR.isArmed())
   {
     if(modeName != 'GUIDED')
     {
+      /*
       if(modePending == null)
       {
         modePending = 'GUIDED';
@@ -242,6 +256,7 @@ const manuver = Promise.coroutine(function *()
         yield threeDR.waitForMode('GUIDED');
         modePending = null;
       }
+      */
     }
 
     if(goal.plan == "parallel")
