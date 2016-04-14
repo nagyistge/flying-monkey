@@ -244,11 +244,10 @@ const manuver = Promise.coroutine(function *()
 {
   let modeName = threeDR.modeName();
 
-  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null)// && threeDR.isArmed())
+  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null && threeDR.isArmed())
   {
     if(modeName != 'GUIDED')
     {
-      /*
       if(modePending == null)
       {
         modePending = 'GUIDED';
@@ -256,7 +255,6 @@ const manuver = Promise.coroutine(function *()
         yield threeDR.waitForMode('GUIDED');
         modePending = null;
       }
-      */
     }
 
     if(goal.plan == "parallel")
