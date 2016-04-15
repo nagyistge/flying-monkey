@@ -30,8 +30,10 @@ function recordFlightData(gpsObj,now)
 
 const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
 {
+  console.log(`alt = ${alt}`)
   if(alt == null) return;
   if(homeLocation == null) homeLocation = yield threeDR.getHomeLocation();
+  console.log(`home loc = ${homeLocation}`)
   if(homeLocation != null)
   {
     let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
@@ -88,7 +90,6 @@ const canSetYaw = Promise.coroutine(function *(newYaw)
   return true;
 });
 
-
 const planParallelCourse = Promise.coroutine(function *(planData)
 {
   let destLat = planData.target.lat;
@@ -137,6 +138,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let theta = 0;
   let vn = 0,ve = 0;
   let homeToKeyAzmuth = keyToHomeAzmuth - Math.PI;
+  let keyAngle = 0,keyToHomeAngle = 0;
 
   if(keyToHomeAzmuth < 0) keyToHomeAzmuth += 2*Math.PI;
   if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
@@ -149,27 +151,42 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   if(!isNaN(planData.key.speed))
   {
     s = planData.key.speed;
-    theta = keyToHomeAzmuth - planData.key.azmuth;
+    keyAngle = Math.PI/2 - planData.key.azmuth;
+    keyToHomeAngle = Math.PI/2 - keyToHomeAzmuth;
+    if(keyAngle < 0) keyAngle += 2*Math.PI;
+    if(keyToHomeAngle < 0) keyToHomeAngle += 2*Math.PI;
+    theta = keyToHomeAngle - keyAngle;
     if(theta < 0) theta += 2*Math.PI;
   }
 
-  let deltaF = yield numerics.deltaF1(r,theta,s);
-  let LL = yield numerics.destination(planData.key.lat,planData.key.long,keyToHomeAzmuth - deltaF[1],r - deltaF[0]);
-  let targetAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,LL[0],LL[1]);
-  let targetDistance = yield numerics.haversine(planData.home.lat,planData.home.long,LL[0],LL[1]);
-  let now = new Date();
+  let deltaF = yield numerics.deltaF2(r,theta,s);
   let yaw = homeToKeyAzmuth*180/Math.PI;
+  let dx = -deltaF[0];
+  let dy = -deltaF[1];
+  let de = dx;
+  let dn = dy;
+  //let LL = yield numerics.destination(planData.key.lat,planData.key.long,keyToHomeAzmuth - deltaF[1],r - deltaF[0]);
+  //let targetAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,LL[0],LL[1]);
+  //let targetDistance = yield numerics.haversine(planData.home.lat,planData.home.long,LL[0],LL[1]);
+  //let now = new Date();
 
-  console.log(`s = ${s} deltaF = ${deltaF}`);
-  gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
+  console.log(`r = ${r} theta = ${theta*180/Math.PI} s = ${s} dx = ${dx} dy = ${dy}`);
+  //gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
 
   //console.log(`r = ${r} ktoha = ${keyToHomeAzmuth*180/Math.PI} ka = ${planData.key.azmuth*180/Math.PI} theta = ${theta*180/Math.PI} s = ${s} deltaF = ${deltaF} LL = ${LL}`);
   //console.log(`r = ${r} ktoha = ${keyToHomeAzmuth*180/Math.PI} ka = ${planData.key.azmuth*180/Math.PI} theta = ${theta*180/Math.PI}`);
   //console.log(`s = ${s} deltaF = ${deltaF} LL = ${LL} targetAzmuth = ${targetAzmuth} targetDistance = ${targetDistance}`);
   //console.log(`homeLat = ${planData.home.lat} homeLong = ${planData.home.long} keyLat = ${planData.key.lat} keyLong = ${planData.key.long}`)
 
-  vn += Math.cos(targetAzmuth)*targetDistance;
-  ve += Math.sin(targetAzmuth)*targetDistance;
+  if(!isNaN(planData.key.azmuth))
+  {
+    console.log(`keyAngle = ${keyAngle*180/Math.PI}`);
+    de = dx*Math.cos(keyAngle) - dy*Math.sin(keyAngle);
+    dn = dx*Math.sin(keyAngle) + dy*Math.cos(keyAngle);
+  }
+
+  vn += dn;
+  ve += de;
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
@@ -244,7 +261,7 @@ const manuver = Promise.coroutine(function *()
 {
   let modeName = threeDR.modeName();
 
-  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null && threeDR.isArmed())
+  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null)// && threeDR.isArmed())
   {
     if(modeName != 'GUIDED')
     {

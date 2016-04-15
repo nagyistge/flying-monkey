@@ -21,9 +21,11 @@ function deltaF2(args::Array{Float64})
    r = args[1];
    theta = args[2];
    s = args[3];
-   denom = sqrt((r - (s/2)*(5 + 2*cos(theta)))^2)
-   gradient[1] = (2r - s*(5 + 2*cos(theta)))/denom - 0.25*cos(theta + pi);
-   gradient[2] = (s*sin(theta)*(2r - s*(5 + cos(theta))))/denom - 0.25*r*sin(theta + pi);
+   denom = abs(r -s*(2*cos(theta) + 5))
+   dtheta = (2*s*sin(theta)*(r - s*(2*cos(theta) + 5)))/denom + r/4*sin(theta);
+   dr = (r - 2*s*cos(theta) - 5*s)/denom - cos(theta)/4;
+   gradient[1] = cos(theta)*dr - 1/r*sin(theta)*dtheta;
+   gradient[2] = sin(theta)*dr + 1/r*cos(theta)*dtheta;
    return gradient;
 end
 
