@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import math
+import json
+
 FRAME_LOCAL_NED = 1
 MAV_CMD_CONDITION_YAW = 115
 
@@ -59,17 +62,18 @@ def process_command(command,vehicle):
       vd = float(x[3])
       cmd_str = "velocity " + str(vn) + " " + str(ve) + " " + str(vd)
       print(json.dumps({ 'cmd':cmd_str }))
-      send_ned_velocity(vehicle,vn,ve,vd)
+      if not math.isnan(vn) and not math.isnan(ve) and not math.isnan(vd): send_ned_velocity(vehicle,vn,ve,vd)
    elif x[0] == "setYaw":
       heading = float(x[1])
       cmd_str = "yaw " + str(heading)
       print(json.dumps({ 'cmd':cmd_str }))
-      condition_yaw(vehicle,heading)
+      if not math.isnan(yaw): condition_yaw(vehicle,heading)
 
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
 def main():
    target = "udpin:0.0.0.0:14550"
    vehicle = dronekit.connect(target,wait_ready=True)
+   print(json.dumps({ 'isConnected':True }))
    vehicle.add_attribute_listener('location.global_frame',attribute_callback)
    vehicle.add_attribute_listener('mode',attribute_callback)
    vehicle.add_attribute_listener('armed',attribute_callback)
@@ -83,7 +87,6 @@ def main():
 try:
    import dronekit
    import sys
-   import json
    main()
 except ImportError:
-   pass
+   print(json.dumps({ 'isConnected':False }))

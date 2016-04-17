@@ -18,6 +18,7 @@ let shell;
 let isArmed = false;
 let modeName = null;
 let homeLocation = null;
+let isConnected = null;
 
 const init = Promise.promisify(function(done)
 {
@@ -82,6 +83,7 @@ const init = Promise.promisify(function(done)
           for(let i = 0;i < callbackList.length;i++) callbackList[i](velocity);
         }
       }
+      else if(json.isConnected != null) isConnected = json.isConnected;
       else if(json.attitude != null)
       {
         let attitude = json.attitude;
@@ -176,8 +178,8 @@ module.exports =
   {
     if(shell != null && isArmed) shell.send("guided");
   },
-
   isArmed:function() { return isArmed; },
+  isConnected:function() { return isConnected; },
   loiter:function()
   {
     if(shell != null && isArmed) shell.send("loiter");

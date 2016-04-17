@@ -134,37 +134,26 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 {
   let keyToHomeAzmuth = yield numerics.forwardAzmuth(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
   let r = yield numerics.haversine(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
-  let s = 0;
-  let theta = 0;
-  let vn = 0,ve = 0;
+  let s = planData.key.speed;
   let homeToKeyAzmuth = keyToHomeAzmuth - Math.PI;
-  let keyAngle = 0,keyToHomeAngle = 0;
 
   if(keyToHomeAzmuth < 0) keyToHomeAzmuth += 2*Math.PI;
   if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
-  if(!isNaN(planData.home.azmuth))
-  {
-    vn = Math.cos(planData.home.azmuth)*planData.home.speed;
-    ve = Math.sin(planData.home.azmuth)*planData.home.speed;
-  }
 
-  if(!isNaN(planData.key.speed))
-  {
-    s = planData.key.speed;
-    keyAngle = Math.PI/2 - planData.key.azmuth;
-    keyToHomeAngle = Math.PI/2 - keyToHomeAzmuth;
-    if(keyAngle < 0) keyAngle += 2*Math.PI;
-    if(keyToHomeAngle < 0) keyToHomeAngle += 2*Math.PI;
-    theta = keyToHomeAngle - keyAngle;
-    if(theta < 0) theta += 2*Math.PI;
-  }
+  let keyAngle = Math.PI/2 - planData.key.azmuth;
+  let keyToHomeAngle = Math.PI/2 - keyToHomeAzmuth;
+
+  if(keyAngle < 0) keyAngle += 2*Math.PI;
+  if(keyToHomeAngle < 0) keyToHomeAngle += 2*Math.PI;
+
+  let theta = keyToHomeAngle - keyAngle;
+
+  if(theta < 0) theta += 2*Math.PI;
 
   let deltaF = yield numerics.deltaF2(r,theta,s);
   let yaw = homeToKeyAzmuth*180/Math.PI;
   let dx = -deltaF[0];
   let dy = -deltaF[1];
-  let de = dx;
-  let dn = dy;
   //let LL = yield numerics.destination(planData.key.lat,planData.key.long,keyToHomeAzmuth - deltaF[1],r - deltaF[0]);
   //let targetAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,LL[0],LL[1]);
   //let targetDistance = yield numerics.haversine(planData.home.lat,planData.home.long,LL[0],LL[1]);
@@ -178,21 +167,21 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   //console.log(`s = ${s} deltaF = ${deltaF} LL = ${LL} targetAzmuth = ${targetAzmuth} targetDistance = ${targetDistance}`);
   //console.log(`homeLat = ${planData.home.lat} homeLong = ${planData.home.long} keyLat = ${planData.key.lat} keyLong = ${planData.key.long}`)
 
-  if(!isNaN(planData.key.azmuth))
-  {
-    console.log(`keyAngle = ${keyAngle*180/Math.PI}`);
-    de = dx*Math.cos(keyAngle) - dy*Math.sin(keyAngle);
-    dn = dx*Math.sin(keyAngle) + dy*Math.cos(keyAngle);
-  }
+  console.log(`keyAngle = ${keyAngle*180/Math.PI}`);
+  let ve = dx*Math.cos(keyAngle) - dy*Math.sin(keyAngle);
+  let vn = dx*Math.sin(keyAngle) + dy*Math.cos(keyAngle);
 
-  vn += dn;
-  ve += de;
+  if(planData.home.speed != 0)
+  {
+    vn += Math.cos(planData.home.azmuth)*planData.home.speed;
+    ve += Math.sin(planData.home.azmuth)*planData.home.speed;
+  }
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
   if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
+  //if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
 });
 
 const assemblePlanData = Promise.coroutine(function *()
@@ -261,9 +250,10 @@ const manuver = Promise.coroutine(function *()
 {
   let modeName = threeDR.modeName();
 
-  if(modeName != 'RTL' && isManuvering && goal.serial >= 1 && modePending  == null)// && threeDR.isArmed())
+  if(threeDR.isConnected() == null) return;
+  if(isManuvering && goal.serial >= 1 && (!threeDR.isConnected() || (modeName != 'RTL' &&  modePending  == null && threeDR.isArmed())))
   {
-    if(modeName != 'GUIDED')
+    if(modeName != 'GUIDED' && threeDR.isConnected())
     {
       if(modePending == null)
       {
@@ -273,18 +263,20 @@ const manuver = Promise.coroutine(function *()
         modePending = null;
       }
     }
-
-    if(goal.plan == "parallel")
+    else
     {
-      let planData = yield assemblePlanData();
+      if(goal.plan == "parallel")
+      {
+        let planData = yield assemblePlanData();
 
-      yield planParallelCourse(planData);
-    }
-    else if(goal.plan == "tether")
-    {
-      let planData = yield assemblePlanData();
+        if(!isNaN(planData.home.speed) && !isNaN(planData.key.speed) && !isNaN(planData.target.speed)) yield planParallelCourse(planData);
+      }
+      else if(goal.plan == "tether")
+      {
+        let planData = yield assemblePlanData();
 
-      yield planTetheredCourse(planData);
+        if(!isNaN(planData.home.speed) && !isNaN(planData.key.speed)) yield planTetheredCourse(planData);
+      }
     }
   }
   else if(!isManuvering || modeName == 'RTL')
@@ -483,7 +475,12 @@ module.exports =
     return null;
   },
   goto: function() { gotoTarget(false); },
-  loiter: function() { threeDR.loiter(); },
+  loiter: function()
+  {
+    goal.plan = null;
+    isManuvering = false;
+    threeDR.loiter();
+  },
   parallel: function(id)
   {
     if(keyId != null) gpsDB.clearUpdates(keyId);
@@ -500,7 +497,16 @@ module.exports =
     separationVectors[id] = null;
     gpsDB.addUpdate(id,deviceUpdate);
   },
-  rtl: function() { threeDR.rtl(); },
+  rtl: function()
+  {
+    goal.plan = null;
+    isManuvering = false;
+    threeDR.rtl();
+  },
   track: function() { isManuvering = true; },
-  untrack: function() { isManuvering = false; }
+  untrack: function()
+  {
+    goal.plan = null;
+    isManuvering = false;
+  }
 }
