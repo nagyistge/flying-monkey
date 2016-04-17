@@ -1,10 +1,13 @@
+#!/usr/bin/env python
 from dronekit import connect
 import sys
+import time
 
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
 target = sys.argv[1] if len(sys.argv) >= 2 else 'udpin:0.0.0.0:14550'
 print 'Connecting to ' + target + '...'
-vehicle = connect(target, wait_ready=True)
+#vehicle = connect(target, wait_ready=True)
+vehicle = connect(target)
 
 # Get all vehicle attributes (state)
 print "Vehicle state:"
@@ -23,4 +26,5 @@ print " Is Armable?: %s" % vehicle.is_armable
 print " Armed: %s" % vehicle.armed
 
 vehicle.close()
+time.sleep(3)
 print "Done."
