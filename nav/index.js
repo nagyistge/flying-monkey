@@ -255,8 +255,9 @@ const manuver = Promise.coroutine(function *()
   let modeName = threeDR.modeName();
 
   if(threeDR.isConnected() == null) return;
-  if(goal.plan = "stop")
+  if(goal.plan == "stop")
   {
+    console.log("stopping....");
     if(modeName == 'GUIDED') threeDR.setVelocity(0,0,0);
     if(modeName != 'LOITER') threeDR.loiter();
     isManuvering = false;

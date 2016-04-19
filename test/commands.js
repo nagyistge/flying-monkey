@@ -128,6 +128,17 @@ const navRTL = Promise.promisify(function(url,callback)
   });
 });
 
+const navStop = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/stop',
+    json: true
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const navTether = Promise.promisify(function(url,id,callback)
 {
   request.post({
@@ -212,6 +223,11 @@ const send = Promise.coroutine(function*(url,id,name,lat,long,alt,serial)
   yield coordSend(url,id,name,now.valueOf(),lat,long,alt,serial);
 });
 
+const stop = Promise.coroutine(function*(url)
+{
+  return yield navStop(url);
+});
+
 const tether = Promise.coroutine(function*(url,id)
 {
   return yield navTether(url,id);
@@ -238,6 +254,7 @@ module.exports =
   rtl:rtl,
   reset:reset,
   send:send,
+  stop:stop,
   tether:tether,
   track:track,
   untrack:untrack
