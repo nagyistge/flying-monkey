@@ -1,7 +1,7 @@
 "use strict";
 
 const Promise = require('bluebird');
-const engine = require('../numerics');
+const engine = require('../numerics')();
 
 function gpsSource(id,latitude0,longitude0,altitude0,pvar,obvar)
 {

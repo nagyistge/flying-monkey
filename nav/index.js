@@ -3,7 +3,7 @@
 const gpsDB = require('../gpsDB');
 const Promise = require('bluebird');
 const threeDR = require('../3DR');
-const numerics = require('../numerics');
+const numerics = require('../numerics')();
 
 let keyId = null;
 let separationVectors = {};

@@ -3,7 +3,7 @@
 const express = require('express');
 const gpsDB = require('../gpsDB');
 const Promise = require('bluebird')
-const numerics = require('../numerics');
+const numerics = require('../numerics')();
 
 let router = express.Router();
 let serialTable = {};
