@@ -20,6 +20,8 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+var io = require('socket.io')(http);
+var engine = require('../numericEngine');
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -28,6 +30,8 @@ var server = http.createServer(app);
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
+io.on('connection',engine.onConnection);
 
 /**
  * Normalize a port into a number, string, or false.
