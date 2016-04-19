@@ -28,9 +28,13 @@
     "ejs": "~2.3.3",
     "express": "~4.13.1",
     "morgan": "~1.6.1",
-    "node-julia": "git://github.com/waTeim/node-julia.git",
     "python-shell": "x",
     "request": "x",
-    "serve-favicon": "~2.3.0"
+    "serve-favicon": "~2.3.0",
+    "socket.io": "x",
+    "socket.io-client": "x"
+  },
+  "devDependencies": {
+    "node-julia": "git://github.com/waTeim/node-julia.git"
   }
 }
