@@ -125,9 +125,11 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
-  if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
-  if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
+  if(!isNaN(ve) && !isNaN(vd))
+    if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
+  if(!isNan(yaw))
+    if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
+  //if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -171,7 +173,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let ve = dx*Math.cos(keyAngle) - dy*Math.sin(keyAngle);
   let vn = dx*Math.sin(keyAngle) + dy*Math.cos(keyAngle);
 
-  if(planData.home.speed != 0)
+  if(!isNaN(planData.home.speed) && !isNaN(planData.home.azmuth))
   {
     vn += Math.cos(planData.home.azmuth)*planData.home.speed;
     ve += Math.sin(planData.home.azmuth)*planData.home.speed;
@@ -179,8 +181,10 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
-  if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
-  if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
+  if(!isNaN(vn) && !isNaN(ve))
+    if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
+  if(!isNaN(yaw))
+    if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
   //if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
 });
 
@@ -251,7 +255,13 @@ const manuver = Promise.coroutine(function *()
   let modeName = threeDR.modeName();
 
   if(threeDR.isConnected() == null) return;
-  if(isManuvering && goal.serial >= 1 && (!threeDR.isConnected() || (modeName != 'RTL' &&  modePending  == null && threeDR.isArmed())))
+  if(goal.plan = "stop")
+  {
+    if(modeName == 'GUIDED') threeDR.setVelocity(0,0,0);
+    if(modeName != 'LOITER') threeDR.loiter();
+    isManuvering = false;
+  }
+  else if(isManuvering && goal.serial >= 1 && (!threeDR.isConnected() || (modeName != 'RTL' &&  modePending  == null && threeDR.isArmed())))
   {
     if(modeName != 'GUIDED' && threeDR.isConnected())
     {
@@ -503,6 +513,7 @@ module.exports =
     isManuvering = false;
     threeDR.rtl();
   },
+  stop: function() { goal.plan = "stop"; },
   track: function() { isManuvering = true; },
   untrack: function()
   {

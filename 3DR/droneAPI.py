@@ -67,12 +67,13 @@ def process_command(command,vehicle):
       heading = float(x[1])
       cmd_str = "yaw " + str(heading)
       print(json.dumps({ 'cmd':cmd_str }))
-      if not math.isnan(yaw): condition_yaw(vehicle,heading)
+      if not math.isnan(heading): condition_yaw(vehicle,heading)
 
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
 def main():
    target = "udpin:0.0.0.0:14550"
-   vehicle = dronekit.connect(target,wait_ready=True)
+   #vehicle = dronekit.connect(target,wait_ready=True)
+   vehicle = dronekit.connect(target)
    print(json.dumps({ 'isConnected':True }))
    vehicle.add_attribute_listener('location.global_frame',attribute_callback)
    vehicle.add_attribute_listener('mode',attribute_callback)
