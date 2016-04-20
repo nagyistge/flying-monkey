@@ -1,13 +1,13 @@
 "use strict";
 
-const engine = require('../numerics')();
+const numerics = require('../numerics')();
 const Promise = require('bluebird');
 
 const cbtab =
 {
   'kalman.InitialGuess': Promise.coroutine(function *(args)
   {
-    return yield engine.kalmanInitialGuess(args[0],args[1]);
+    return yield numerics.kalmanInitialGuess(args[0],args[1]);
   })
 };
 
