@@ -32,8 +32,6 @@ module.exports =
     let s = args[2];
     let gradient = [];
 
-   gradient[1] =  -2*r*(s/(s + 1)*e^-(2*r/(s + 1))*(2 - 0.5*cos(theta + pi))  + 2*e^-(0.25*r^2)) + 1;
-
     gradient[0] = -2*r*(s/(s + 1)*Math.exp(-2*r/(s + 1))*(2 - 0.5*cos(theta + Math.PI)) + 2*Math.exp(-0.25*r*r)) + 1;
     gradient[1] = 0.5*s*Math.exp(-2*r/(s + 1))*Math.sin(theta);
     return gradient;
@@ -62,7 +60,7 @@ module.exports =
     let distanceInRadians = distanceInMeters/earthRadius(args[1]);
     let destLat = Math.asin(Math.sin(srcLat)*Math.cos(distanceInRadians) + Math.cos(srcLat)*Math.sin(distanceInRadians)*Math.cos(azmuth));
     let dlong = srcLong + Math.atan2(Math.sin(azmuth)*Math.sin(distanceInRadians)*Math.cos(srcLat),Math.cos(distanceInRadians) - Math.sin(srcLat)*Math.sin(destLat));
-    let destLong = (dlong + 3*pi) % (2*Math.PI) - Math.PI;
+    let destLong = (dlong + 3*Math.PI) % (2*Math.PI) - Math.PI;
 
     res[0] = destLat*180/Math.PI;
     res[1] = destLong*180/Math.PI;
