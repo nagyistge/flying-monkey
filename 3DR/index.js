@@ -153,6 +153,10 @@ const getVariable = Promise.promisify(function(variableName,done)
 
 module.exports =
 {
+  arm: function()
+  {
+    if(shell != null && !isArmed) shell.send('arm');
+  },
   getAttitude:Promise.coroutine(function *()
   {
     return yield getVariable('attitude');
@@ -180,6 +184,10 @@ module.exports =
   },
   isArmed:function() { return isArmed; },
   isConnected:function() { return isConnected; },
+  launch: function()
+  {
+    if(shell != null && isArmed) shell.send("launch");
+  },
   loiter:function()
   {
     if(shell != null && isArmed) shell.send("loiter");

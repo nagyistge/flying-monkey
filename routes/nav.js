@@ -13,6 +13,12 @@ router.post('/archive',function(req,res,next)
   }
 });
 
+router.post('/arm',function(req,res,next)
+{
+  nav.arm();
+  res.status(200).send('OK');
+});
+
 router.post('/getFlightPath',function(req,res,next)
 {
   if(req.body.deviceId != null)
@@ -36,6 +42,12 @@ router.post('/getFlightPath',function(req,res,next)
 router.post('/goto',function(req,res,next)
 {
   nav.goto();
+  res.status(200).send('OK');
+});
+
+router.post('/launch',function(req,res,next)
+{
+  nav.launch();
   res.status(200).send('OK');
 });
 

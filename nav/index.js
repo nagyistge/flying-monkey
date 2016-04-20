@@ -477,6 +477,10 @@ module.exports =
       flightData[id].current = [];
     }
   },
+  arm: function()
+  {
+    threeDR.arm();
+  },
   azmuth: function(id,azmuth)
   {
     if(id && separationVectors[id] != null) separationVectors[id].azmuth = azmuth;
@@ -487,6 +491,10 @@ module.exports =
     return null;
   },
   goto: function() { gotoTarget(false); },
+  launch: function()
+  {
+    threeDR.launch();
+  }.
   loiter: function()
   {
     goal.plan = null;

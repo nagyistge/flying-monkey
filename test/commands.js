@@ -64,6 +64,17 @@ const navArchive = Promise.promisify(function(url,id,callback)
   });
 });
 
+const navArm = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/arm',
+    json: true
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const navFlightPath = Promise.promisify(function(url,id,num,callback)
 {
   request.post({
@@ -84,6 +95,17 @@ const navGoto = Promise.promisify(function(url,callback)
 {
   request.post({
     url: url + 'nav/goto',
+    json: true
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
+const navLaunch = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/launch',
     json: true
   },
   function (err,res,body) {
@@ -181,6 +203,11 @@ const archive = Promise.coroutine(function*(url,id)
   return yield navArchive(url,id);
 });
 
+const arm = Promise.coroutine(function*(url)
+{
+  return yield navArm(url);
+});
+
 const flightPath = Promise.coroutine(function*(url,id,num)
 {
   return yield navFlightPath(url,id,num);
@@ -194,6 +221,11 @@ const goto = Promise.coroutine(function*(url)
 const list = Promise.coroutine(function*(url)
 {
   return yield getList(url);
+});
+
+const launch = Promise.coroutine(function*(url)
+{
+  return yield navLaunch(url);
 });
 
 const loiter = Promise.coroutine(function*(url)
@@ -246,9 +278,11 @@ const untrack = Promise.coroutine(function*(url)
 module.exports =
 {
   archive:archive,
+  arm:arm,
   flightPath:flightPath,
   goto:goto,
   list:list,
+  launch:launch,
   loiter:loiter,
   parallel:parallel,
   rtl:rtl,
