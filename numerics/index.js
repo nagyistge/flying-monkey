@@ -9,6 +9,7 @@ let nav_geo;
 
 program
   .option('-h, --host [hostname]', 'hostname [localhost]',"localhost")
+  .option('-p, --port [port]', 'port [3000]',"3000")
   .parse(process.argv);
 
 
@@ -53,7 +54,50 @@ module.exports = function()
   }
   else
   {
+    var io = require('socket.io-client');
+    var socket = io.connect('http://'+program.host+':' + program.port, {reconnect: true});
 
+    socket.on('connect', function() {
+      console.log('socket connected');
+    });
+
+    var socketJuliaBind = function(fnName, submitData, cb) {
+      var allArgs = Array.from(submitData);
+      var cb = allArgs.pop();
+
+      socket.emit('drone-chan', 'drone1', {fnName: fnName, args: allArgs}, 
+        function(responseData) {
+          cb(null, responseData); 
+        }
+      );
+    }
+
+    nav_geo = {
+      speed: function(data, cb) {
+        cb();
+      }
+    }
+
+    kalman = {
+      initialGuess: function() { 
+        socketJuliaBind('kalman.initialGuess', arguments);
+      },
+      newModel: function() {
+        socketJuliaBind('kalman.newModel', arguments);
+      },
+      predict: function() {
+        socketJuliaBind('kalman.predict', arguments);
+      },
+      extractMeanFromState: function() {
+        socketJuliaBind('kalman.extractMeanFromState', arguments);
+      },
+      extractVarianceFromState: function() {
+        socketJuliaBind('kalman.extractVarianceFromState', arguments);
+      },
+      update: function() {
+        socketJuliaBind('kalman.update', arguments);
+      }
+    } 
   }
 
   let res =
@@ -127,5 +171,6 @@ module.exports = function()
     kalmanUpdate: Promise.promisify(kalman.update),
     speed: Promise.promisify(nav_geo.speed)
   };
+
   return res;
 }
