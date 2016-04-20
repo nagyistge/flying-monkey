@@ -103,7 +103,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
   }
   else console.log("target velocity is NaN");
 
-  if(planData.home.ve != null && planData.home.vn != null)
+  if(planData.home.vLat != null && planData.home.vLong != null)
   {
     destLat -= 0.25*planData.home.vLat;
     destLong -= 0.25*planData.home.vLong;
@@ -115,6 +115,8 @@ const planParallelCourse = Promise.coroutine(function *(planData)
   let homeToKeyAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
   let homeToKeyDistance = yield numerics.haversine(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
 
+  console.log(homeToFutureTargetAzmuth,homeToFutureTargetDistance,speed,homeToKeyAzmuth,homeToKeyDistance);
+
   if(homeToFutureTargetAzmuth < 0) homeToFutureTargetAzmuth += 2*Math.PI;
   if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
 
@@ -125,9 +127,9 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
-  if(!isNaN(ve) && !isNaN(vd))
+  if(!isNaN(vn) && !isNaN(ve))
     if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
-  if(!isNan(yaw))
+  if(!isNaN(yaw))
     if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
   //if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });

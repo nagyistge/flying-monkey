@@ -24,6 +24,7 @@ def condition_yaw(vehicle,heading):
 def process_command(command,vehicle):
    x = command.split();
    if x[0] == "arm":
+      vehicle.mode = dronekit.VehicleMode("GUIDED")
       vehicle.armed = True
    elif x[0] == "getAttitude":
       print(json.dumps({ 'attitude':vehicle.attitude }))
