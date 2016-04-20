@@ -494,7 +494,7 @@ module.exports =
   launch: function()
   {
     threeDR.launch();
-  }.
+  },
   loiter: function()
   {
     goal.plan = null;
