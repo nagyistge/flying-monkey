@@ -2,10 +2,10 @@
 
 const Promise = require('bluebird');
 const program = require('commander');
+const nav_geo = require('./nav_geo');
 
 let julia;
 let kalman;
-let nav_geo;
 
 program
   .option('-h, --host [hostname]', 'hostname [localhost]',"localhost")
@@ -72,11 +72,13 @@ module.exports = function()
       );
     }
 
+/*
     nav_geo = {
       speed: function(data, cb) {
         cb();
       }
     }
+*/
 
     kalman = {
       initialGuess: function() { 
