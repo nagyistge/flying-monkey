@@ -16,10 +16,10 @@ function earthRadius(lat)
   let b =  6356752.3;
   let phi = lat*Math.PI/180;
 
-  return Math.sqrt(((a^2*Math.cos(phi))^2 + Math.pow(b*b*Math.sin(phi),2))/(Math.pow(a*Math.cos(phi),2) + Math.pow(b*Math.sin(phi),2)));
+  return Math.sqrt((Math.pow(a*a*Math.cos(phi),2) + Math.pow(b*b*Math.sin(phi),2))/(Math.pow(a*Math.cos(phi),2) + Math.pow(b*Math.sin(phi),2)));
 }
 
-module.exports = 
+module.exports =
 {
   cosineSimilarity: function(a,b)
   {
@@ -46,18 +46,18 @@ module.exports =
     let dtheta = (2*s*Math.sin(theta)*(r - s*(2*Math.cos(theta) + 5)))/denom + r/4*Math.sin(theta);
     let dr = (r - 2*s*Math.cos(theta) - 5*s)/denom - Math.cos(theta)/4;
 
-    gradient[1] = Math.cos(theta)*dr - 1/r*Math.sin(theta)*dtheta;
-    gradient[2] = Math.sin(theta)*dr + 1/r*Math.cos(theta)*dtheta;
+    gradient[0] = Math.cos(theta)*dr - 1/r*Math.sin(theta)*dtheta;
+    gradient[1] = Math.sin(theta)*dr + 1/r*Math.cos(theta)*dtheta;
     return gradient;
   },
   destination: function(args)
   {
     let res = [];
-    let srcLat = args[1]*Math.PI/180;
-    let srcLong = args[2]*Math.PI/180;
-    let azmuth = args[3];
-    let distanceInMeters = args[4];
-    let distanceInRadians = distanceInMeters/earthRadius(args[1]);
+    let srcLat = args[0]*Math.PI/180;
+    let srcLong = args[1]*Math.PI/180;
+    let azmuth = args[2];
+    let distanceInMeters = args[3];
+    let distanceInRadians = distanceInMeters/earthRadius(args[0]);
     let destLat = Math.asin(Math.sin(srcLat)*Math.cos(distanceInRadians) + Math.cos(srcLat)*Math.sin(distanceInRadians)*Math.cos(azmuth));
     let dlong = srcLong + Math.atan2(Math.sin(azmuth)*Math.sin(distanceInRadians)*Math.cos(srcLat),Math.cos(distanceInRadians) - Math.sin(srcLat)*Math.sin(destLat));
     let destLong = (dlong + 3*Math.PI) % (2*Math.PI) - Math.PI;
@@ -83,14 +83,15 @@ module.exports =
   },
   haversine: function(args)
   {
-    let lat1 = args[1];
-    let long1 = args[2];
-    let lat2 = args[3];
-    let long2 = args[4];
+    let lat1 = args[0];
+    let long1 = args[1];
+    let lat2 = args[2];
+    let long2 = args[3];
     let phi1 = lat1*Math.PI/180;
     let phi2 = lat2*Math.PI/180;
     let lam1 = long1*Math.PI/180;
     let lam2 = long2*Math.PI/180;
+
 
     return 2*earthRadius(lat1)*Math.asin(Math.sqrt(Math.pow(Math.sin((phi2 - phi1)/2),2) + Math.cos(phi1)*Math.cos(phi2)*Math.pow(Math.sin((lam2 - lam1)/2),2)));
   },

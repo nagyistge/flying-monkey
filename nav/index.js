@@ -395,6 +395,7 @@ const updateParallelTarget = Promise.coroutine(function *(gpsObj)
     let azmuth = yield numerics.forwardAzmuth(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
     let distance = yield numerics.haversine(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
 
+
     separationVectors[gpsObj.id] =
     {
       azmuth:azmuth,
