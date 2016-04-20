@@ -97,6 +97,6 @@ module.exports =
   },
   speed: function(x)
   {
-    return 7*(2/(1 + Math.exp(Math.pow(-abs(x/10),5/4))) - 1);
+    return 7*(2/(1 + Math.exp(Math.pow(-Math.abs(x/10),5/4))) - 1);
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "gpsFlow",
+  "name": "flying-monkey",
   "description": "simple multiple GPS source collection",
   "main": "app.js",
   "authors": [
