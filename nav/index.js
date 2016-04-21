@@ -469,6 +469,24 @@ const gotoTarget = Promise.coroutine(function *(track)
   }
 });
 
+const arm = Promise.coroutine(function *() 
+{
+  let modeName = threeDR.modeName();
+
+  if(modeName != 'STABILIZE' && threeDR.isConnected())
+  {
+    threeDR.stabilize();
+    yield threeDR.waitForMode('STABILIZE');
+    modeName = threeDR.modeName();
+  }
+  if(modeName != 'GUIDED' && threeDR.isConnected())
+  {
+    threeDR.guided();
+    yield threeDR.waitForMode('GUIDED');
+    threeDR.arm();
+  }
+});
+
 module.exports =
 {
   archive: function(id)
@@ -479,10 +497,7 @@ module.exports =
       flightData[id].current = [];
     }
   },
-  arm: function()
-  {
-    threeDR.arm();
-  },
+  arm: function() { arm(); },
   azmuth: function(id,azmuth)
   {
     if(id && separationVectors[id] != null) separationVectors[id].azmuth = azmuth;

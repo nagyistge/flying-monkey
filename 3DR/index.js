@@ -8,6 +8,8 @@ let router =
 {
   RTL: [],
   GUIDED: [],
+  LOITER: [],
+  STABILIZE: [],
   attitude: [],
   gimbal: [],
   homeLocation: [],
@@ -180,7 +182,7 @@ module.exports =
   },
   guided:function()
   {
-    if(shell != null && isArmed) shell.send("guided");
+    if(shell != null) shell.send("guided");
   },
   isArmed:function() { return isArmed; },
   isConnected:function() { return isConnected; },
@@ -208,6 +210,10 @@ module.exports =
   setYaw:function(yaw)
   {
     if(shell != null && isArmed) shell.send(`setYaw ${yaw}`);
+  },
+  stabilize:function()
+  {
+    if(shell != null) shell.send("stabilize");
   },
   waitForMode: function(targetModeName)
   {

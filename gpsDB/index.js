@@ -88,8 +88,8 @@ function addGPSCoord(id,name,millis,lat,long,alt)
       }
       else
       {
-        pVar = 0.00004;
-        oVar = 0.00006;
+        pVar = 0.0006;
+        oVar = 0.0006;
       }
 
       gpsObj =

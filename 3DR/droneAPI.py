@@ -23,9 +23,7 @@ def condition_yaw(vehicle,heading):
 
 def process_command(command,vehicle):
    x = command.split();
-   if x[0] == "arm":
-      vehicle.mode = dronekit.VehicleMode("GUIDED")
-      vehicle.armed = True
+   if x[0] == "arm": vehicle.armed = True
    elif x[0] == "getAttitude":
       print(json.dumps({ 'attitude':vehicle.attitude }))
    elif x[0] == "getGimbal":
@@ -73,6 +71,9 @@ def process_command(command,vehicle):
       cmd_str = "yaw " + str(heading)
       print(json.dumps({ 'cmd':cmd_str }))
       if not math.isnan(heading): condition_yaw(vehicle,heading)
+   elif x[0] == "stabilize":
+      vehicle.mode = dronekit.VehicleMode("STABILIZE")
+      print(json.dumps({ 'cmd':'stabilize' }))
 
 # Connect to UDP endpoint (and wait for default attributes to accumulate)
 def main():
