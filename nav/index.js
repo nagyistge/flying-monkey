@@ -154,7 +154,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   if(theta < 0) theta += 2*Math.PI;
 
-  let deltaF = yield numerics.deltaF2(r,theta,s);
+  let deltaF = yield numerics.maelstorm(r,theta,s);
   let yaw = homeToKeyAzmuth*180/Math.PI;
   let dx = -deltaF[0];
   let dy = -deltaF[1];
@@ -469,7 +469,7 @@ const gotoTarget = Promise.coroutine(function *(track)
   }
 });
 
-const arm = Promise.coroutine(function *() 
+const arm = Promise.coroutine(function *()
 {
   let modeName = threeDR.modeName();
 

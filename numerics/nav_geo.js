@@ -50,6 +50,19 @@ module.exports =
     gradient[1] = Math.sin(theta)*dr + 1/r*Math.cos(theta)*dtheta;
     return gradient;
   },
+  maelstorm: function(args)
+  {
+    let gradient = [];
+    let r = args[0];
+    let theta = args[1];
+    let s = args[2];
+    let x = r*Math.cos(theta);
+    let y = r*Math.sin(theta);
+
+    gradient[0] = x*Math.cos(2*Math.PI/(1 + Math.exp(-(s*s - (x*x + y*y))/s*s)) - y*Math.sin(2*Math.PI/(1 + Math.exp(-(s*s - (x*x + y*y))/s*s));
+    gradient[1] = x*Math.sin(2*Math.PI/(1 + Math.exp(-(s*s - (x*x + y*y))/s*s)) + y*Math.cos(2*Math.PI/(1 + Math.exp(-(s*s - (x*x + y*y))/s*s));
+    return gradient;
+  },
   destination: function(args)
   {
     let res = [];
