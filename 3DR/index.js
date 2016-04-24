@@ -65,24 +65,23 @@ const init = Promise.promisify(function(done)
       {
         homeLocation = json.homeLocation;
 
-        console.log("homeLocation set to: ",homeLocation);
-        let callbackList = router['homeLocatoin'];
+        let callbackList = router['homeLocation'];
 
         if(callbackList != null)
         {
           router[homeLocation] = [];
-          for(let i = 0;i < callbackList.length;i++) callbackList[i](homeLocation);
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](null,homeLocation);
         }
       }
       else if(json.velocity != null)
       {
-        let velocity = { vn:json.velocity.vx, ve:json.velocity.vy, vd:json.velocity.vz };
+        let velocity = { vn:json.velocity[1], ve:json.velocity[0], vd:json.velocity[2] };
         let callbackList = router['velocity'];
 
         if(callbackList != null)
         {
           router['velocity'] = [];
-          for(let i = 0;i < callbackList.length;i++) callbackList[i](velocity);
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](null,velocity);
         }
       }
       else if(json.isConnected != null) isConnected = json.isConnected;
@@ -94,18 +93,19 @@ const init = Promise.promisify(function(done)
         if(callbackList != null)
         {
           router['attitude'] = [];
-          for(let i = 0;i < callbackList.length;i++) callbackList[i](attitude);
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](null,attitude);
         }
       }
       else if(json.gimbal != null)
       {
         let gimbal = json.gimbal;
-        let callbackList = router['attitude'];
+        let callbackList = router['gimbal'];
 
+        console.log("gimbal set to: ",gimbal);
         if(callbackList != null)
         {
           router['gimbal'] = [];
-          for(let i = 0;i < callbackList.length;i++) callbackList[i](gimbal);
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](null,gimbal);
         }
       }
       else if(json.cmd != null) console.log("cmd: ",json.cmd);
@@ -143,13 +143,14 @@ const waitForMode = Promise.promisify(function(targetModeName,done)
   }
 });
 
-const getVariable = Promise.promisify(function(variableName,done)
+const getVariable = Promise.promisify(function(cmd,variableName,done)
 {
   if(shell != null)
   {
     let callbackList = router[variableName];
 
     if(callbackList != null) callbackList.push(done);
+    shell.send(cmd);
   }
 });
 
@@ -161,20 +162,21 @@ module.exports =
   },
   getAttitude:Promise.coroutine(function *()
   {
-    return yield getVariable('attitude');
+    return yield getVariable('getAttitude','attitude');
   }),
   getGimbal:Promise.coroutine(function *()
   {
-    return yield getVariable('gimbal');
+    return yield getVariable('getGimbal','gimbal');
   }),
   getHomeLocation:Promise.coroutine(function *()
   {
     if(homeLocation != null) return homeLocation;
-    return yield getVariable('homeLocation');
+    homeLocation = yield getVariable('getHomeLocation','homeLocation');
+    return homeLocation;
   }),
   getVelocity:Promise.coroutine(function *()
   {
-    return yield getVariable('velocity');
+    return yield getVariable('getVelocity','velocity');
   }),
   goto:function(lat,long,alt,speed)
   {

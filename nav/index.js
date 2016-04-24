@@ -30,7 +30,6 @@ function recordFlightData(gpsObj,now)
 
 const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
 {
-  console.log(`alt = ${alt}`)
   if(alt == null) return;
   if(homeLocation == null) homeLocation = yield threeDR.getHomeLocation();
   console.log(`home loc = ${homeLocation}`)
@@ -38,6 +37,9 @@ const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
   {
     let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
 
+console.log("rotating gimbal pitch = ",pitch);
+
+    targetGimbalPitch = pitch;
     threeDR.rotateGimbal(pitch);
   }
 });
@@ -53,7 +55,7 @@ const canSetGimbal = Promise.coroutine(function *(newGimbalPitch)
   let currentGimbalPitch = yield threeDR.getGimbal();
 
   gimbalPitchDiff = currentGimbalPitch - targetGimbalPitch;
-  if(gimbalPitchDiff < 3) return false;
+  if(gimbalPitchDiff > 2) return false;
   return true;
 });
 
@@ -63,12 +65,7 @@ const canSetVelocity = Promise.coroutine(function *(newVelocity)
 
   let similarity = yield numerics.compareVelocity(newVelocity,targetVelocity);
 
-  if(simiarlity >= 0.997) return false;
-
-  let currentVelocity = yield threeDR.getVelocity();
-
-  similarity = yield numerics.compareVelocity(currentVelocity,targetVelocity);
-  if(simiarlity >= 0.999) return false;
+  if(simiarlity >= 0.998) return false;
   return true;
 });
 
@@ -131,7 +128,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
     if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(!isNaN(yaw))
     if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  //if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
+  if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -140,54 +137,22 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let r = yield numerics.haversine(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
   let s = planData.key.speed;
   let homeToKeyAzmuth = keyToHomeAzmuth - Math.PI;
-
-  if(keyToHomeAzmuth < 0) keyToHomeAzmuth += 2*Math.PI;
-  if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
-
-  let keyAngle = Math.PI/2 - planData.key.azmuth;
   let keyToHomeAngle = Math.PI/2 - keyToHomeAzmuth;
-
-  if(keyAngle < 0) keyAngle += 2*Math.PI;
-  if(keyToHomeAngle < 0) keyToHomeAngle += 2*Math.PI;
-
-  let theta = keyToHomeAngle - keyAngle;
-
-  if(theta < 0) theta += 2*Math.PI;
-
-  let deltaF = yield numerics.maelstorm(r,theta,s);
+  let keyAngle = Math.PI/2 - planData.key.azmuth;
+  let deltaF = yield numerics.maelstorm(r,keyToHomeAngle,s,keyAngle);
   let yaw = homeToKeyAzmuth*180/Math.PI;
-  let dx = -deltaF[0];
-  let dy = -deltaF[1];
-  //let LL = yield numerics.destination(planData.key.lat,planData.key.long,keyToHomeAzmuth - deltaF[1],r - deltaF[0]);
-  //let targetAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,LL[0],LL[1]);
-  //let targetDistance = yield numerics.haversine(planData.home.lat,planData.home.long,LL[0],LL[1]);
-  //let now = new Date();
+  let ve = -deltaF[0];
+  let vn = -deltaF[1];
 
-  console.log(`r = ${r} theta = ${theta*180/Math.PI} s = ${s} dx = ${dx} dy = ${dy}`);
   //gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
 
-  //console.log(`r = ${r} ktoha = ${keyToHomeAzmuth*180/Math.PI} ka = ${planData.key.azmuth*180/Math.PI} theta = ${theta*180/Math.PI} s = ${s} deltaF = ${deltaF} LL = ${LL}`);
-  //console.log(`r = ${r} ktoha = ${keyToHomeAzmuth*180/Math.PI} ka = ${planData.key.azmuth*180/Math.PI} theta = ${theta*180/Math.PI}`);
-  //console.log(`s = ${s} deltaF = ${deltaF} LL = ${LL} targetAzmuth = ${targetAzmuth} targetDistance = ${targetDistance}`);
-  //console.log(`homeLat = ${planData.home.lat} homeLong = ${planData.home.long} keyLat = ${planData.key.lat} keyLong = ${planData.key.long}`)
-
-  console.log(`keyAngle = ${keyAngle*180/Math.PI}`);
-  let ve = dx*Math.cos(keyAngle) - dy*Math.sin(keyAngle);
-  let vn = dx*Math.sin(keyAngle) + dy*Math.cos(keyAngle);
-
-  if(!isNaN(planData.home.speed) && !isNaN(planData.home.azmuth))
-  {
-    vn += Math.cos(planData.home.azmuth)*planData.home.speed;
-    ve += Math.sin(planData.home.azmuth)*planData.home.speed;
-  }
-
-  console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
+  if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
 
   if(!isNaN(vn) && !isNaN(ve))
     if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(!isNaN(yaw))
     if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  //if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
+  if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
 });
 
 const assemblePlanData = Promise.coroutine(function *()
@@ -198,14 +163,18 @@ const assemblePlanData = Promise.coroutine(function *()
   let targetState = goal.target;
   let keyState = goal.key;
   let latencyFactor = (mTime - goal.millis)/1000;
+  let srcLost = false;
+  let homeUpdated = [0,0];
+  let keyUpdated = [0,0];
+  let targetUpdated = [0,0];
 
   if(latencyFactor > 1) latencyFactor = 1;
-
-  let homeUpdated = yield numerics.destination(homeState.lat,homeState.long,homeState.azmuth,homeState.speed*latencyFactor);
-  let keyUpdated = yield numerics.destination(keyState.lat,keyState.long,keyState.azmuth,keyState.speed*latencyFactor);
-  let targetUpdated;
-
-  if(targetState != null) targetUpdated = yield numerics.destination(targetState.lat,targetState.long,targetState.azmuth,targetState.speed*latencyFactor);
+  if(!srcLost)
+  {
+    homeUpdated = yield numerics.destination(homeState.lat,homeState.long,homeState.azmuth,homeState.speed*latencyFactor);
+    keyUpdated = yield numerics.destination(keyState.lat,keyState.long,keyState.azmuth,keyState.speed*latencyFactor);
+    if(targetState != null) targetUpdated = yield numerics.destination(targetState.lat,targetState.long,targetState.azmuth,targetState.speed*latencyFactor);
+  }
 
   //console.log(`latencyFactor = ${latencyFactor} compensation: hs = ${homeState.speed*latencyFactor} ts = ${targetState.speed*latencyFactor} ks = ${keyState.speed*latencyFactor}`)
 
@@ -219,7 +188,7 @@ const assemblePlanData = Promise.coroutine(function *()
       vLat:homeState.vLat,
       vLong:homeState.vLong,
       vAlt:homeState.vAlt,
-      speed:homeState.speed,
+      speed:srcLost?0:homeState.speed,
       azmuth:homeState.asmuth
     },
     key:
@@ -230,7 +199,7 @@ const assemblePlanData = Promise.coroutine(function *()
       vLat:keyState.vLat,
       vLong:keyState.vLong,
       vAlt:keyState.vAlt,
-      speed:keyState.speed,
+      speed:srcLost?0:keyState.speed,
       azmuth:keyState.azmuth
     }
   };
@@ -245,7 +214,7 @@ const assemblePlanData = Promise.coroutine(function *()
       vLat:targetState.vLat,
       vLong:targetState.vLong,
       vAlt:targetState.vAlt,
-      speed:targetState.speed,
+      speed:srcLost?0:targetState.speed,
       azmuth:targetState.azmuth
     }
   }
@@ -304,7 +273,7 @@ const manuver = Promise.coroutine(function *()
   }
 });
 
-setInterval(manuver,300);
+setInterval(manuver,200);
 
 const updateGoal = Promise.coroutine(function *()
 {

@@ -8,6 +8,9 @@ target = sys.argv[1] if len(sys.argv) >= 2 else 'udpin:0.0.0.0:14550'
 print 'Connecting to ' + target + '...'
 #vehicle = connect(target, wait_ready=True)
 vehicle = connect(target)
+cmds = vehicle.commands
+cmds.download()
+cmds.wait_ready()
 
 # Get all vehicle attributes (state)
 print "Vehicle state:"
@@ -15,6 +18,7 @@ print " Global Location: %s" % vehicle.location.global_frame
 print " Global Location (relative altitude): %s" % vehicle.location.global_relative_frame
 print " Local Location: %s" % vehicle.location.local_frame
 print " Attitude: %s" % vehicle.attitude
+print " Home: %s" % vehicle.home_location
 print " Velocity: %s" % vehicle.velocity
 print " Battery: %s" % vehicle.battery
 print " Last Heartbeat: %s" % vehicle.last_heartbeat

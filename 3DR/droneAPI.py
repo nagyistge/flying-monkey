@@ -5,6 +5,7 @@ import json
 
 FRAME_LOCAL_NED = 1
 MAV_CMD_CONDITION_YAW = 115
+downloaded = False
 
 def attribute_callback(self,attr_name,value):
   if value != None:
@@ -22,6 +23,8 @@ def condition_yaw(vehicle,heading):
    vehicle.send_mavlink(msg)
 
 def process_command(command,vehicle):
+   global downloaded
+
    x = command.split();
    if x[0] == "arm": vehicle.armed = True
    elif x[0] == "getAttitude":
@@ -29,7 +32,13 @@ def process_command(command,vehicle):
    elif x[0] == "getGimbal":
       print(json.dumps({ 'gimbal':vehicle.gimbal.pitch }))
    elif x[0] == "getHomeLocation":
-      print(json.dumps({ 'homeLocation':vehicle.home_location }))
+      if not downloaded: 
+         cmds = vehicle.commands
+         cmds.download()
+         cmds.wait_ready()
+         downloaded = True
+      if vehicle.home_location == None: print(json.dumps({ 'homeLocation':None }))
+      else: print(json.dumps({ 'homeLocation':{ 'lat':vehicle.home_location.lat, 'long':vehicle.home_location.lon, 'alt':vehicle.home_location.alt }}))
    elif x[0] == "getVelocity":
       print(json.dumps({ 'velocity':vehicle.velocity }))
    elif x[0] == "goto":
