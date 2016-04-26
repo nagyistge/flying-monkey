@@ -28,19 +28,22 @@ def process_command(command,vehicle):
    x = command.split();
    if x[0] == "arm": vehicle.armed = True
    elif x[0] == "getAttitude":
-      print(json.dumps({ 'attitude':vehicle.attitude }))
+      if vehicle.attitude == None: print(json.dumps({ 'attitude':{ 'value':None }}))
+      else: print(json.dumps({ 'attitude':{ 'value':{ 'pitch':vehicle.attitude.pitch, 'yaw':vehicle.attitude.yaw, 'roll':vehicle.attitude.roll }}}))
    elif x[0] == "getGimbal":
-      print(json.dumps({ 'gimbal':vehicle.gimbal.pitch }))
+      if vehicle.gimbal == None: print(json.dumps({ 'gimbal':{ 'value':None }}))
+      print(json.dumps({ 'gimbal':{ value:vehicle.gimbal.pitch }}))
    elif x[0] == "getHomeLocation":
       if not downloaded: 
          cmds = vehicle.commands
          cmds.download()
          cmds.wait_ready()
          downloaded = True
-      if vehicle.home_location == None: print(json.dumps({ 'homeLocation':None }))
-      else: print(json.dumps({ 'homeLocation':{ 'lat':vehicle.home_location.lat, 'long':vehicle.home_location.lon, 'alt':vehicle.home_location.alt }}))
+      if vehicle.home_location == None: print(json.dumps({ 'homeLocation':{ 'value':None }}))
+      else: print(json.dumps({ 'homeLocation':{ value:{ 'lat':vehicle.home_location.lat, 'long':vehicle.home_location.lon, 'alt':vehicle.home_location.alt }}}))
    elif x[0] == "getVelocity":
-      print(json.dumps({ 'velocity':vehicle.velocity }))
+      if vehicle.velocity == None: print(json.dumps({ 'velocity':{ 'value':None }}))
+      print(json.dumps({ 'velocity':{ 'value':vehicle.velocity }}))
    elif x[0] == "goto":
       coord_lat = float(x[1])
       coord_long = float(x[2])

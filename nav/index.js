@@ -17,6 +17,7 @@ let mTime = (new Date()).valueOf();
 let homeLocation = null;
 let targetGimbalPitch = null;
 let targetYaw = null;
+let checkingYaw = false;
 let targetVelocity = null;
 
 function recordFlightData(gpsObj,now)
@@ -84,33 +85,45 @@ const canSetVelocity = Promise.coroutine(function *(newVelocity)
   let similarity = yield numerics.compareVelocity(newVelocity,targetVelocity);
 
   if(similarity == null) return false;
-  if(similarity >= 0.998)
-  {
-    console.log("rejecting velocity (too similar)",similarity);
-    return false;
-  }
+  if(similarity >= 0.998) return false;
+  targetVelocity = newVelocity;
   return true;
 });
 
 const canSetYaw = Promise.coroutine(function *(newYaw)
 {
-  return true;
-  if(newYaw == null) return false;
+  if(newYaw == null || checkingYaw)
+  {
+     console.log(`rejecting: newYaw = ${newYaw} checkYaw = ${checkingYaw}`);
+     return false;
+  }
   if(targetYaw == null)
   {
     targetYaw = newYaw;
     return true;
   }
 
-  let yawDiff = Math.cos(targetYaw);
+  let similarity = Math.cos((targetYaw - newYaw)/180*Math.PI);
 
-  if(Math.abs(yawDiff) < "x") return false;
+  if(similarity >= 0.98)
+  {
+    console.log("rejecting yaw ",newYaw);
+    return false;
+  }
+  checkingYaw = true;
 
   let currentAttitude = yield threeDR.getAttitude();
 
-  yawDiff = currentAttitude.yaw*180/Math.PI - targetYaw;
+  checkingYaw = false;
+  similarity = Math.cos(targetYaw/180*Math.PI - currentAttitude.yaw);
+  if(similarity < 0.98)
+  {
+    console.log("rejecting yaw ",newYaw);
+    return false;
+  }
 
-  if(Math.abs(yawDiff) > 3) return false;
+  console.log("accepting yaw ",newYaw);
+  targetYaw = newYaw;
   return true;
 });
 
@@ -176,7 +189,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   let yaw = homeToKeyAzmuth*180/Math.PI;
 
-  console.log(`trying to set velocity: vn = ${vn} ve = ${ve}`);
+  //console.log(`trying to set velocity: vn = ${vn} ve = ${ve}`);
 
   //if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
   if(!isNaN(vn) && !isNaN(ve))

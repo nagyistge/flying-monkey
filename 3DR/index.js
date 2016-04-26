@@ -70,12 +70,15 @@ const init = Promise.promisify(function(done)
         if(callbackList != null)
         {
           router[homeLocation] = [];
-          for(let i = 0;i < callbackList.length;i++) callbackList[i](null,homeLocation);
+          for(let i = 0;i < callbackList.length;i++) callbackList[i](null,homeLocation.value);
         }
       }
       else if(json.velocity != null)
       {
-        let velocity = { vn:json.velocity[1], ve:json.velocity[0], vd:json.velocity[2] };
+        let value = json.velocity.value;
+        let velocity;
+
+        if(value != null) velocity = { vn:value[1], ve:value[0], vd:value[2] };
         let callbackList = router['velocity'];
 
         if(callbackList != null)
@@ -87,7 +90,7 @@ const init = Promise.promisify(function(done)
       else if(json.isConnected != null) isConnected = json.isConnected;
       else if(json.attitude != null)
       {
-        let attitude = json.attitude;
+        let attitude = json.attitude.value;
         let callbackList = router['attitude'];
 
         if(callbackList != null)
@@ -98,7 +101,7 @@ const init = Promise.promisify(function(done)
       }
       else if(json.gimbal != null)
       {
-        let gimbal = json.gimbal;
+        let gimbal = json.gimbal.value;
         let callbackList = router['gimbal'];
 
         console.log("gimbal set to: ",gimbal);
