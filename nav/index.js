@@ -32,7 +32,7 @@ const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
 {
   if(alt == null) return;
   if(homeLocation == null) homeLocation = yield threeDR.getHomeLocation();
-  console.log(`home loc = ${homeLocation}`)
+console.log(`home loc = ${homeLocation}`)
   if(homeLocation != null)
   {
     let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
@@ -46,44 +46,71 @@ console.log("rotating gimbal pitch = ",pitch);
 
 const canSetGimbal = Promise.coroutine(function *(newGimbalPitch)
 {
-  if(targetGimbalPitch == null) return true;
+  if(targetGimbalPitch == null)
+  {
+    targetGimbalPitch = newGimbalPitch;
+    return true;
+  }
 
   let gimbalPitchDiff = targetGimbalPitch - newGimbalPitch;
 
-  if(gimbalPitchDiff < 5) return false;
+  if(gimbalPitchDiff < 5)
+  {
+    console.log("rejecting pitch (too similar)",gimbalPitchDiff);
+    return false;
+  }
 
+  console.log("checking  pitch");
   let currentGimbalPitch = yield threeDR.getGimbal();
 
   gimbalPitchDiff = currentGimbalPitch - targetGimbalPitch;
-  if(gimbalPitchDiff > 2) return false;
+  if(gimbalPitchDiff > 2)
+  {
+    console.log("rejecting pitch (lagged)",gimbalPitchDiff);
+    return false;
+  }
   return true;
 });
 
 const canSetVelocity = Promise.coroutine(function *(newVelocity)
 {
-  if(targetVelocity == null) return true;
+  if(newVelocity == null) return false;
+  if(targetVelocity == null)
+  {
+    targetVelocity = newVelocity;
+    return true;
+  }
 
   let similarity = yield numerics.compareVelocity(newVelocity,targetVelocity);
 
-  if(simiarlity >= 0.998) return false;
+  if(similarity == null) return false;
+  if(similarity >= 0.998)
+  {
+    console.log("rejecting velocity (too similar)",similarity);
+    return false;
+  }
   return true;
 });
 
 const canSetYaw = Promise.coroutine(function *(newYaw)
 {
-  if(targetYaw == null) return true;
+  return true;
+  if(newYaw == null) return false;
+  if(targetYaw == null)
+  {
+    targetYaw = newYaw;
+    return true;
+  }
 
-  let yawDiff = targetYaw - newYaw;
+  let yawDiff = Math.cos(targetYaw);
 
-  if(yawDiff < 0) yawDiff += 360;
-  if(yawDiff < 5) return false;
+  if(Math.abs(yawDiff) < "x") return false;
 
   let currentAttitude = yield threeDR.getAttitude();
 
   yawDiff = currentAttitude.yaw*180/Math.PI - targetYaw;
 
-  if(yawDiff < 0) yawDiff += 360;
-  if(yawDiff > 3) return false;
+  if(Math.abs(yawDiff) > 3) return false;
   return true;
 });
 
@@ -128,7 +155,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
     if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(!isNaN(yaw))
     if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
+  //if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -140,7 +167,6 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let keyToHomeAngle = Math.PI/2 - keyToHomeAzmuth;
   let keyAngle = Math.PI/2 - planData.key.azmuth;
   let deltaF = yield numerics.maelstorm(r,keyToHomeAngle,s,keyAngle);
-  let yaw = homeToKeyAzmuth*180/Math.PI;
   let ve = -deltaF[0];
   let vn = -deltaF[1];
 
@@ -148,11 +174,15 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
 
+  let yaw = homeToKeyAzmuth*180/Math.PI;
+
+  console.log(`trying to set velocity: vn = ${vn} ve = ${ve}`);
+
+  //if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
   if(!isNaN(vn) && !isNaN(ve))
     if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(!isNaN(yaw))
     if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
 });
 
 const assemblePlanData = Promise.coroutine(function *()
