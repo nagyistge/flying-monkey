@@ -105,7 +105,7 @@ const canSetYaw = Promise.coroutine(function *(newYaw)
 
   let similarity = Math.cos((targetYaw - newYaw)/180*Math.PI);
 
-  if(similarity >= 0.98)
+  if(similarity >= 0.99)
   {
     console.log("rejecting yaw ",newYaw);
     return false;
@@ -116,7 +116,7 @@ const canSetYaw = Promise.coroutine(function *(newYaw)
 
   checkingYaw = false;
   similarity = Math.cos(targetYaw/180*Math.PI - currentAttitude.yaw);
-  if(similarity < 0.98)
+  if(similarity < 0.99)
   {
     console.log("rejecting yaw ",newYaw);
     return false;
@@ -157,10 +157,12 @@ const planParallelCourse = Promise.coroutine(function *(planData)
   if(homeToFutureTargetAzmuth < 0) homeToFutureTargetAzmuth += 2*Math.PI;
   if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
 
-  let yaw = homeToKeyAzmuth*180/Math.PI;
+  let yaw = homeToKeyAzmuth*180/Math.PI + 25;
   let vn = Math.cos(homeToFutureTargetAzmuth)*speed*0.8;
   let ve = Math.sin(homeToFutureTargetAzmuth)*speed*0.8;
   let res;
+
+  if(yaw > 360) yaw -= 360;
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 

@@ -61,11 +61,11 @@ module.exports =
     let y = r*Math.sin(theta);
     let p = s + 1.5;
 
-    if(p < 2) p = 2;
+    if(p < 2.5) p = 2.5;
 
-    let ux = 0.9*p*x/norm([x,y,0]);
-    let uy = 0.9*p*y/norm([x,y,0]);
-    let a = 3.4*p;
+    let ux = 0.8*p*x/norm([x,y,0]);
+    let uy = 0.8*p*y/norm([x,y,0]);
+    let a = 2.9*p;
     let ex = (x/a)*(x/a);
     let ey = (y/a)*(y/a);
     let f = Math.PI/(1 + Math.exp(-(1 - Math.sqrt(ex + ey))));
