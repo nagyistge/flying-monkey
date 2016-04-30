@@ -18,6 +18,7 @@ let homeLocation = null;
 let targetGimbalPitch = null;
 let targetYaw = null;
 let checkingYaw = false;
+let checkYawCount = 0;
 let targetVelocity = null;
 
 function recordFlightData(gpsObj,now)
@@ -33,12 +34,9 @@ const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
 {
   if(alt == null) return;
   if(homeLocation == null) homeLocation = yield threeDR.getHomeLocation();
-console.log(`home loc = ${homeLocation}`)
   if(homeLocation != null)
   {
     let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
-
-console.log("rotating gimbal pitch = ",pitch);
 
     targetGimbalPitch = pitch;
     threeDR.rotateGimbal(pitch);
@@ -53,7 +51,7 @@ const canSetGimbal = Promise.coroutine(function *(newGimbalPitch)
     return true;
   }
 
-  let gimbalPitchDiff = targetGimbalPitch - newGimbalPitch;
+  let gimbalPitchDiff = Math.abs(targetGimbalPitch - newGimbalPitch);
 
   if(gimbalPitchDiff < 5)
   {
@@ -63,7 +61,8 @@ const canSetGimbal = Promise.coroutine(function *(newGimbalPitch)
 
   console.log("checking  pitch");
   let currentGimbalPitch = yield threeDR.getGimbal();
-
+  
+  if(currentGimbalPitch == null) return false;
   gimbalPitchDiff = currentGimbalPitch - targetGimbalPitch;
   if(gimbalPitchDiff > 2)
   {
@@ -85,7 +84,7 @@ const canSetVelocity = Promise.coroutine(function *(newVelocity)
   let similarity = yield numerics.compareVelocity(newVelocity,targetVelocity);
 
   if(similarity == null) return false;
-  if(similarity >= 0.998) return false;
+  if(similarity >= 0.9992) return false;
   targetVelocity = newVelocity;
   return true;
 });
@@ -94,8 +93,12 @@ const canSetYaw = Promise.coroutine(function *(newYaw)
 {
   if(newYaw == null || checkingYaw)
   {
-     console.log(`rejecting: newYaw = ${newYaw} checkYaw = ${checkingYaw}`);
-     return false;
+    if(checkingYaw)
+    {
+      if(checkYawCount++ == 5) process.exit(1);
+      console.log("checkingYaw = true");
+    }
+    return false;
   }
   if(targetYaw == null)
   {
@@ -105,24 +108,14 @@ const canSetYaw = Promise.coroutine(function *(newYaw)
 
   let similarity = Math.cos((targetYaw - newYaw)/180*Math.PI);
 
-  if(similarity >= 0.99)
-  {
-    console.log("rejecting yaw ",newYaw);
-    return false;
-  }
+  if(similarity >= 0.99) return false;
   checkingYaw = true;
 
   let currentAttitude = yield threeDR.getAttitude();
 
   checkingYaw = false;
   similarity = Math.cos(targetYaw/180*Math.PI - currentAttitude.yaw);
-  if(similarity < 0.99)
-  {
-    console.log("rejecting yaw ",newYaw);
-    return false;
-  }
-
-  console.log("accepting yaw ",newYaw);
+  if(similarity < 0.9985) return false;
   targetYaw = newYaw;
   return true;
 });
@@ -157,12 +150,10 @@ const planParallelCourse = Promise.coroutine(function *(planData)
   if(homeToFutureTargetAzmuth < 0) homeToFutureTargetAzmuth += 2*Math.PI;
   if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
 
-  let yaw = homeToKeyAzmuth*180/Math.PI + 25;
+  let yaw = homeToKeyAzmuth*180/Math.PI;
   let vn = Math.cos(homeToFutureTargetAzmuth)*speed*0.8;
   let ve = Math.sin(homeToFutureTargetAzmuth)*speed*0.8;
   let res;
-
-  if(yaw > 360) yaw -= 360;
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
@@ -170,7 +161,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
     if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(!isNaN(yaw))
     if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
-  //if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
+  if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -178,22 +169,35 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let keyToHomeAzmuth = yield numerics.forwardAzmuth(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
   let r = yield numerics.haversine(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
   let s = planData.key.speed;
-  let homeToKeyAzmuth = keyToHomeAzmuth - Math.PI;
   let keyToHomeAngle = Math.PI/2 - keyToHomeAzmuth;
   let keyAngle = Math.PI/2 - planData.key.azmuth;
   let deltaF = yield numerics.maelstorm(r,keyToHomeAngle,s,keyAngle);
   let ve = -deltaF[0];
   let vn = -deltaF[1];
+  let futureKeyLat = planData.key.lat;
+  let futureKeyLong = planData.key.long;
 
-  //gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
+  if(!isNaN(planData.key.vLat) && !isNaN(planData.key.vLong))
+  { 
+    futureKeyLat += 2.0*planData.key.vLat;
+    futureKeyLong += 2.0*planData.key.vLong;
+  }
 
-  if(homeToKeyAzmuth < 0) homeToKeyAzmuth += 2*Math.PI;
+  let homeToFutureKeyAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,futureKeyLat,futureKeyLong);
+  let homeToFutureKeyDistance = yield numerics.haversine(planData.home.lat,planData.home.long,futureKeyLat,futureKeyLong);
 
-  let yaw = homeToKeyAzmuth*180/Math.PI;
+  if(homeToFutureKeyAzmuth < 0) homeToFutureKeyAzmuth += 2*Math.PI;
 
-  //console.log(`trying to set velocity: vn = ${vn} ve = ${ve}`);
+  let yaw = homeToFutureKeyAzmuth*180/Math.PI + 10;
 
-  //if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
+  if(yaw > 360) yaw -= 360;
+
+  let now = new Date();
+  let LL = yield numerics.destination(planData.home.lat,planData.home.long,homeToFutureKeyAzmuth,homeToFutureKeyDistance);
+
+  gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
+
+  if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
   if(!isNaN(vn) && !isNaN(ve))
     if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
   if(!isNaN(yaw))

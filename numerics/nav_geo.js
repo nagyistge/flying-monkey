@@ -63,8 +63,8 @@ module.exports =
 
     if(p < 2.5) p = 2.5;
 
-    let ux = 0.8*p*x/norm([x,y,0]);
-    let uy = 0.8*p*y/norm([x,y,0]);
+    let ux = 0.65*p*x/norm([x,y,0]);
+    let uy = 0.65*p*y/norm([x,y,0]);
     let a = 2.9*p;
     let ex = (x/a)*(x/a);
     let ey = (y/a)*(y/a);

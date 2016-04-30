@@ -104,7 +104,6 @@ const init = Promise.promisify(function(done)
         let gimbal = json.gimbal.value;
         let callbackList = router['gimbal'];
 
-        console.log("gimbal set to: ",gimbal);
         if(callbackList != null)
         {
           router['gimbal'] = [];
@@ -112,8 +111,12 @@ const init = Promise.promisify(function(done)
         }
       }
       else if(json.cmd != null) console.log("cmd: ",json.cmd);
+      else console.log("unidentified json: ",JSON.stringify(json,null,2));
     }
-    catch(e) {}
+    catch(e)
+    {
+       console.log("some error ",e,message);
+    }
   });
 
   shell.on('error',function(message)
