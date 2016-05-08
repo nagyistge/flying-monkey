@@ -21,6 +21,7 @@ let isArmed = false;
 let modeName = null;
 let homeLocation = null;
 let isConnected = null;
+let attitude = null;
 
 const init = Promise.promisify(function(done)
 {
@@ -93,11 +94,7 @@ const init = Promise.promisify(function(done)
         let attitude = json.attitude.value;
         let callbackList = router['attitude'];
 
-        if(callbackList != null)
-        {
-          router['attitude'] = [];
-          for(let i = 0;i < callbackList.length;i++) callbackList[i](null,attitude);
-        }
+        for(let i = 0;i < callbackList.length;i++) callbackList[i](null,attitude);
       }
       else if(json.gimbal != null)
       {
@@ -126,11 +123,20 @@ const init = Promise.promisify(function(done)
   done();
 });
 
+function setAttitude(err,value)
+{
+   if(err == null) attitude = value;
+}
+
 init().then(function()
 {
   try
   {
-    if(shell != null) shell.send("mode");
+    if(shell != null)
+    {
+      shell.send("mode");
+      router['attitude'].push(setAttitude);
+    }
   }
   catch(e) { shell = null; }
 });
@@ -166,10 +172,7 @@ module.exports =
   {
     if(shell != null && !isArmed) shell.send('arm');
   },
-  getAttitude:Promise.coroutine(function *()
-  {
-    return yield getVariable('getAttitude','attitude');
-  }),
+  getAttitude:function() { return attitude; },
   getGimbal:Promise.coroutine(function *()
   {
     return yield getVariable('getGimbal','gimbal');

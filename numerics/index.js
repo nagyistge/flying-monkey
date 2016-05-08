@@ -104,7 +104,7 @@ module.exports = function()
 
   let res =
   {
-    compareVelocity: Promise.promisify(function(v1,v2,done)
+    compareVelocity: function(v1,v2)
     {
       let a = new Float64Array(3);
       let b = new Float64Array(3);
@@ -115,8 +115,8 @@ module.exports = function()
       b[0] = v2.vn;
       b[1] = v2.ve;
       b[2] = v2.vd;
-      done(null,nav_geo.haversine(a,b));
-    }),
+      return nav_geo.cosineSimilarity(a,b);
+    },
     deltaF1: Promise.promisify(function(r,theta,s,done)
     {
       let args = new Float64Array(3);

@@ -72,53 +72,43 @@ const canSetGimbal = Promise.coroutine(function *(newGimbalPitch)
   return true;
 });
 
-const canSetVelocity = Promise.coroutine(function *(newVelocity)
+function setVelocity(newVelocity)
 {
-  if(newVelocity == null) return false;
+  if(newVelocity == null || isNaN(newVelocity.vn) || isNaN(newVelocity.ve) || isNaN(newVelocity.vd)) return;
   if(targetVelocity == null)
   {
     targetVelocity = newVelocity;
-    return true;
+    threeDR.setVelocity(newVelocity.vn,newVelocity.ve,newVelocity.vd);
   }
 
-  let similarity = yield numerics.compareVelocity(newVelocity,targetVelocity);
+  let similarity = numerics.compareVelocity(newVelocity,targetVelocity);
 
-  if(similarity == null) return false;
-  if(similarity >= 0.9992) return false;
+  if(similarity == null) return;
+  if(similarity >= 0.9992) return;
   targetVelocity = newVelocity;
-  return true;
-});
+  threeDR.setVelocity(newVelocity.vn,newVelocity.ve,newVelocity.vd);
+}
 
-const canSetYaw = Promise.coroutine(function *(newYaw)
+function setYaw(newYaw)
 {
-  if(newYaw == null || checkingYaw)
-  {
-    if(checkingYaw)
-    {
-      if(checkYawCount++ == 5) process.exit(1);
-      console.log("checkingYaw = true");
-    }
-    return false;
-  }
+  if(newYaw == null || isNaN(targetYaw)) return;
   if(targetYaw == null)
   {
     targetYaw = newYaw;
-    return true;
+    threeDR.setYaw(newYaw);
   }
 
   let similarity = Math.cos((targetYaw - newYaw)/180*Math.PI);
 
-  if(similarity >= 0.99) return false;
-  checkingYaw = true;
+  if(similarity >= 0.99) return;
 
-  let currentAttitude = yield threeDR.getAttitude();
+  let currentAttitude = threeDR.getAttitude();
 
-  checkingYaw = false;
   similarity = Math.cos(targetYaw/180*Math.PI - currentAttitude.yaw);
-  if(similarity < 0.9985) return false;
+  if(similarity < 0.9985) return;
   targetYaw = newYaw;
-  return true;
-});
+  threeDR.setYaw(newYaw);
+}
 
 const planParallelCourse = Promise.coroutine(function *(planData)
 {
@@ -157,10 +147,8 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
   console.log(`yaw = ${yaw} vn = ${vn} ve = ${ve}`);
 
-  if(!isNaN(vn) && !isNaN(ve))
-    if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
-  if(!isNaN(yaw))
-    if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
+  setVelocity({ vn:vn, ve:ve, vd:0 });
+  setYaw(yaw);
   if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
@@ -197,11 +185,9 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
 
-  if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
-  if(!isNaN(vn) && !isNaN(ve))
-    if(yield canSetVelocity({ vn:vn, ve:ve, vd:0 })) threeDR.setVelocity(vn,ve,0);
-  if(!isNaN(yaw))
-    if(yield canSetYaw(yaw)) threeDR.setYaw(yaw);
+//  if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
+  setVelocity({ vn:vn, ve:ve, vd:0 });
+  setYaw(yaw);
 });
 
 const assemblePlanData = Promise.coroutine(function *()

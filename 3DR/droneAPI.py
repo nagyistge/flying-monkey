@@ -23,6 +23,8 @@ def attribute_callback(self,attr_name,value):
    if value != None:
       if attr_name == 'location.global_frame':
          q.put({ 'gpsCoords':{ 'lat':value.lat, 'long':value.lon, 'alt':value.alt }})
+      elif attr_name == 'attitude':
+         q.put({ 'attitude':{ 'value':{'pitch':value.pitch, 'yaw':value.yaw, 'roll':value.roll }}})
       elif attr_name == 'mode': q.put({ 'modeName':value.name })
       elif attr_name == 'armed': q.put({ 'isArmed':value })
 
@@ -39,9 +41,9 @@ def process_command(command,vehicle):
 
    x = command.split();
    if x[0] == "arm": vehicle.armed = True
-   elif x[0] == "getAttitude":
-      if vehicle.attitude == None: q.put({ 'attitude':{ 'value':None }})
-      else: q.put({ 'attitude':{ 'value':{ 'pitch':vehicle.attitude.pitch, 'yaw':vehicle.attitude.yaw, 'roll':vehicle.attitude.roll }}})
+#   elif x[0] == "getAttitude":
+#      if vehicle.attitude == None: q.put({ 'attitude':{ 'value':None }})
+#      else: q.put({ 'attitude':{ 'value':{ 'pitch':vehicle.attitude.pitch, 'yaw':vehicle.attitude.yaw, 'roll':vehicle.attitude.roll }}})
    elif x[0] == "getGimbal":
       if vehicle.gimbal == None: q.put({ 'gimbal':{ 'value':None }})
       else: q.put({ 'gimbal':{ 'value':vehicle.gimbal.pitch }})
@@ -108,6 +110,7 @@ def main():
    vehicle.add_attribute_listener('location.global_frame',attribute_callback)
    vehicle.add_attribute_listener('mode',attribute_callback)
    vehicle.add_attribute_listener('armed',attribute_callback)
+   vehicle.add_attribute_listener('attitude',attribute_callback)
    while 1:
       line = ""
       for c in raw_input():
