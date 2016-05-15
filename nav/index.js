@@ -20,6 +20,7 @@ let targetYaw = null;
 let checkingYaw = false;
 let checkYawCount = 0;
 let targetVelocity = null;
+let obtainingHomeLocation = false;
 
 function recordFlightData(gpsObj,now)
 {
@@ -33,43 +34,30 @@ function recordFlightData(gpsObj,now)
 const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
 {
   if(alt == null) return;
-  if(homeLocation == null) homeLocation = yield threeDR.getHomeLocation();
+  if(homeLocation == null && !obtainingHomeLocation)
+  {
+    obtainingHomeLocation = true;
+    homeLocation = yield threeDR.getHomeLocation();
+    obtainingHomeLocation = false;
+  }
   if(homeLocation != null)
   {
     let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
 
-    targetGimbalPitch = pitch;
+    if(targetGimbalPitch == null) targetGimbalPitch = pitch;
+    else
+    {
+      let gimbalPitchDiff = Math.abs(targetGimbalPitch - pitch);
+
+      if(gimbalPitchDiff < 5)
+      {
+        console.log("rejecting pitch (too similar)",gimbalPitchDiff);
+        return;
+      }
+      targetGimbalPitch = pitch;
+    }
     threeDR.rotateGimbal(pitch);
   }
-});
-
-const canSetGimbal = Promise.coroutine(function *(newGimbalPitch)
-{
-  if(targetGimbalPitch == null)
-  {
-    targetGimbalPitch = newGimbalPitch;
-    return true;
-  }
-
-  let gimbalPitchDiff = Math.abs(targetGimbalPitch - newGimbalPitch);
-
-  if(gimbalPitchDiff < 5)
-  {
-    console.log("rejecting pitch (too similar)",gimbalPitchDiff);
-    return false;
-  }
-
-  console.log("checking  pitch");
-  let currentGimbalPitch = yield threeDR.getGimbal();
-  
-  if(currentGimbalPitch == null) return false;
-  gimbalPitchDiff = currentGimbalPitch - targetGimbalPitch;
-  if(gimbalPitchDiff > 2)
-  {
-    console.log("rejecting pitch (lagged)",gimbalPitchDiff);
-    return false;
-  }
-  return true;
 });
 
 function setVelocity(newVelocity)
@@ -91,23 +79,29 @@ function setVelocity(newVelocity)
 
 function setYaw(newYaw)
 {
-  if(newYaw == null || isNaN(targetYaw)) return;
+  if(newYaw == null || isNaN(targetYaw)) return false;
   if(targetYaw == null)
   {
     targetYaw = newYaw;
     threeDR.setYaw(newYaw);
+    return newYaw;
   }
 
   let similarity = Math.cos((targetYaw - newYaw)/180*Math.PI);
 
-  if(similarity >= 0.99) return;
+  if(similarity >= 0.99) return targetYaw;
 
   let currentAttitude = threeDR.getAttitude();
 
+console.log("currentAttitude.yaw = ",currentAttitude.yaw);
+
+/*
   similarity = Math.cos(targetYaw/180*Math.PI - currentAttitude.yaw);
-  if(similarity < 0.9985) return;
+  if(similarity < 0.9985) return currentAttitude.yaw*180/Math.PI;
+*/
   targetYaw = newYaw;
   threeDR.setYaw(newYaw);
+  return newYaw;
 }
 
 const planParallelCourse = Promise.coroutine(function *(planData)
@@ -149,7 +143,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
   setVelocity({ vn:vn, ve:ve, vd:0 });
   setYaw(yaw);
-  if(yield canSetGimbal(homeToKeyDistance)) yield rotateGimbal(homeToKeyDistance,planData.home.alt);
+  yield rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -165,6 +159,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let futureKeyLat = planData.key.lat;
   let futureKeyLong = planData.key.long;
 
+/*
   if(!isNaN(planData.key.vLat) && !isNaN(planData.key.vLong))
   { 
     futureKeyLat += 2.0*planData.key.vLat;
@@ -177,17 +172,27 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   if(homeToFutureKeyAzmuth < 0) homeToFutureKeyAzmuth += 2*Math.PI;
 
   let yaw = homeToFutureKeyAzmuth*180/Math.PI + 10;
+*/
+
+  let homeToKeyAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
+  let homeToKeyDistance = yield numerics.haversine(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
+  let yaw = homeToKeyAzmuth*180/Math.PI;
 
   if(yaw > 360) yaw -= 360;
+  else if(yaw < 0) yaw += 360;
 
-  let now = new Date();
-  let LL = yield numerics.destination(planData.home.lat,planData.home.long,homeToFutureKeyAzmuth,homeToFutureKeyDistance);
-
-  gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
-
-//  if(yield canSetGimbal(r)) yield rotateGimbal(r,planData.home.alt);
+  yield rotateGimbal(r,planData.home.alt);
   setVelocity({ vn:vn, ve:ve, vd:0 });
-  setYaw(yaw);
+  
+  let resYaw = setYaw(yaw);
+
+  if(typeof resYaw  == "number")
+  {
+    let now = new Date();
+    let LL = yield numerics.destination(planData.home.lat,planData.home.long,resYaw*Math.PI/180,homeToKeyDistance);
+
+    gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
+  }
 });
 
 const assemblePlanData = Promise.coroutine(function *()
