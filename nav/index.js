@@ -6,6 +6,8 @@ const threeDR = require('../3DR');
 const numerics = require('../numerics')();
 
 let keyId = null;
+let nextPlanId = null;
+let maxExecutedPlanId = null;
 let separationVectors = {};
 let home = null;
 let modePending = null;
@@ -31,34 +33,27 @@ function recordFlightData(gpsObj,now)
   flight.current.push({ lat:gpsObj.src.current.lat, long:gpsObj.src.current.long, alt:gpsObj.src.current.alt, millis:now.valueOf() });
 }
 
-const rotateGimbal = Promise.coroutine(function *(keyDistance,alt)
+function rotateGimbal(keyDistance,alt)
 {
   if(alt == null) return;
-  if(homeLocation == null && !obtainingHomeLocation)
-  {
-    obtainingHomeLocation = true;
-    homeLocation = yield threeDR.getHomeLocation();
-    obtainingHomeLocation = false;
-  }
-  if(homeLocation != null)
-  {
-    let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
+  if(homeLocation == null) return;
+   
+  let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
 
-    if(targetGimbalPitch == null) targetGimbalPitch = pitch;
-    else
+  if(targetGimbalPitch == null) targetGimbalPitch = pitch;
+  else
+  {
+    let gimbalPitchDiff = Math.abs(targetGimbalPitch - pitch);
+
+    if(gimbalPitchDiff < 5)
     {
-      let gimbalPitchDiff = Math.abs(targetGimbalPitch - pitch);
-
-      if(gimbalPitchDiff < 5)
-      {
-        console.log("rejecting pitch (too similar)",gimbalPitchDiff);
-        return;
-      }
-      targetGimbalPitch = pitch;
+      console.log("rejecting pitch (too similar)",gimbalPitchDiff);
+      return;
     }
-    threeDR.rotateGimbal(pitch);
+    targetGimbalPitch = pitch;
   }
-});
+  threeDR.rotateGimbal(pitch);
+}
 
 function setVelocity(newVelocity)
 {
@@ -143,7 +138,7 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
   setVelocity({ vn:vn, ve:ve, vd:0 });
   setYaw(yaw);
-  yield rotateGimbal(homeToKeyDistance,planData.home.alt);
+  rotateGimbal(homeToKeyDistance,planData.home.alt);
 });
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
@@ -181,21 +176,26 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   if(yaw > 360) yaw -= 360;
   else if(yaw < 0) yaw += 360;
 
-  yield rotateGimbal(r,planData.home.alt);
-  setVelocity({ vn:vn, ve:ve, vd:0 });
-  
-  let resYaw = setYaw(yaw);
-
-  if(typeof resYaw  == "number")
+  if(maxExecutedPlanId == null || planData.planId > maxExecutedPlanId)
   {
-    let now = new Date();
-    let LL = yield numerics.destination(planData.home.lat,planData.home.long,resYaw*Math.PI/180,homeToKeyDistance);
+    maxExecutedPlanId = planData.planId;
+    setVelocity({ vn:vn, ve:ve, vd:0 });
+  
+    let resYaw = setYaw(yaw);
 
-    gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
+    rotateGimbal(r,planData.home.alt);
+
+    if(typeof resYaw  == "number")
+    {
+      let now = new Date();
+      let LL = yield numerics.destination(planData.home.lat,planData.home.long,resYaw*Math.PI/180,homeToKeyDistance);
+
+      gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
+    }
   }
 });
 
-const assemblePlanData = Promise.coroutine(function *()
+const assemblePlanData = Promise.coroutine(function *(planId)
 {
   mTime = (new Date()).valueOf();
 
@@ -220,6 +220,7 @@ const assemblePlanData = Promise.coroutine(function *()
 
   let planData =
   {
+    planId:planId,
     home:
     {
       lat:homeUpdated[0],
@@ -287,15 +288,18 @@ const manuver = Promise.coroutine(function *()
     }
     else
     {
+      if(nextPlanId == null) nextPlanId = 0;
+      else nextPlanId = nextPlanId + 1;
+
       if(goal.plan == "parallel")
       {
-        let planData = yield assemblePlanData();
+        let planData = yield assemblePlanData(nextPlanId);
 
         if(!isNaN(planData.home.speed) && !isNaN(planData.key.speed) && !isNaN(planData.target.speed)) yield planParallelCourse(planData);
       }
       else if(goal.plan == "tether")
       {
-        let planData = yield assemblePlanData();
+        let planData = yield assemblePlanData(nextPlanId);
 
         if(!isNaN(planData.home.speed) && !isNaN(planData.key.speed)) yield planTetheredCourse(planData);
       }

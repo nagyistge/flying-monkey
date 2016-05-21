@@ -36,6 +36,10 @@ def condition_yaw(vehicle,heading):
    msg = vehicle.message_factory.command_long_encode(0,0,MAV_CMD_CONDITION_YAW,0,heading,0,1,0,0,0,0)
    vehicle.send_mavlink(msg)
 
+def set_roi(vehicle,latitude,longitude,altitude):
+   msg = vehicle.message_factory.command_long_encode(0,0,mavutil.mavlink.MAV_CMD_DO_SET_ROI,0,0,0,0,0,latitude,longitude,altitude)
+   vehicle.send_mavlink(msg)
+
 def process_command(command,vehicle):
    global downloaded
 
@@ -86,6 +90,13 @@ def process_command(command,vehicle):
    elif x[0] == "rtl":
       vehicle.mode = dronekit.VehicleMode("RTL")
       q.put({ 'cmd':'rtl' })
+   elif x[0] == "setROI":
+      latitude = float(x[1])
+      longitude = float(x[2])
+      altitude = float(x[3])
+      cmd_str = "roi " + str(latitude) + " " + str(longitude) + " " + str(altitude)
+      q.put({ 'cmd':cmd_str })
+      if not math.isnan(latitude) and not math.isnan(longitude) and not math.isnan(altitude): set_roi(vehicle,latitude,longitude,altitude)
    elif x[0] == "setVelocity":
       vn = float(x[1])
       ve = float(x[2])

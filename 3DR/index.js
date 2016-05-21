@@ -128,19 +128,6 @@ function setAttitude(err,value)
    if(err == null) attitude = value;
 }
 
-init().then(function()
-{
-  try
-  {
-    if(shell != null)
-    {
-      shell.send("mode");
-      router['attitude'].push(setAttitude);
-    }
-  }
-  catch(e) { shell = null; }
-});
-
 const waitForMode = Promise.promisify(function(targetModeName,done)
 {
   if(shell != null)
@@ -166,6 +153,25 @@ const getVariable = Promise.promisify(function(cmd,variableName,done)
   }
 });
 
+const getHomeLocation = Promise.coroutine(function *()
+{
+  homeLocation = yield getVariable('getHomeLocation','homeLocation');
+});
+
+init().then(function()
+{
+  try
+  {
+    if(shell != null)
+    {
+      shell.send("mode");
+      router['attitude'].push(setAttitude);
+      getHomeLocation();
+    }
+  }
+  catch(e) { shell = null; }
+});
+
 module.exports =
 {
   arm: function()
@@ -177,12 +183,7 @@ module.exports =
   {
     return yield getVariable('getGimbal','gimbal');
   }),
-  getHomeLocation:Promise.coroutine(function *()
-  {
-    if(homeLocation != null) return homeLocation;
-    homeLocation = yield getVariable('getHomeLocation','homeLocation');
-    return homeLocation;
-  }),
+  getHomeLocation:function() { return homeLocation; },
   getVelocity:Promise.coroutine(function *()
   {
     return yield getVariable('getVelocity','velocity');
