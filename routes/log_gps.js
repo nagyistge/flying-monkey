@@ -21,8 +21,8 @@ function checkSerial(id,serial)
 
 const addOrientation = Promise.coroutine(function *(homeState,from)
 {
-  let azmuth = yield numerics.forwardAzmuth(from.lat,from.long,homeState.lat,homeState.long);
-  let distance = yield numerics.haversine(from.lat,from.long,homeState.lat,homeState.long);
+  let azmuth = numerics.forwardAzmuth(from.lat,from.long,homeState.lat,homeState.long);
+  let distance = numerics.haversine(from.lat,from.long,homeState.lat,homeState.long);
 
   if(azmuth < 0) azmuth += 2*Math.PI;
   azmuth = azmuth*180/Math.PI;

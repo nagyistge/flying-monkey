@@ -7,6 +7,7 @@ import threading
 
 FRAME_LOCAL_NED = 1
 MAV_CMD_CONDITION_YAW = 115
+MAV_CMD_DO_SET_ROI = 201
 downloaded = False
 q = Queue.Queue()
 
@@ -37,7 +38,7 @@ def condition_yaw(vehicle,heading):
    vehicle.send_mavlink(msg)
 
 def set_roi(vehicle,latitude,longitude,altitude):
-   msg = vehicle.message_factory.command_long_encode(0,0,mavutil.mavlink.MAV_CMD_DO_SET_ROI,0,0,0,0,0,latitude,longitude,altitude)
+   msg = vehicle.message_factory.command_long_encode(0,0,MAV_CMD_DO_SET_ROI,0,0,0,0,0,latitude,longitude,altitude)
    vehicle.send_mavlink(msg)
 
 def process_command(command,vehicle):

@@ -117,25 +117,25 @@ module.exports = function()
       b[2] = v2.vd;
       return nav_geo.cosineSimilarity(a,b);
     },
-    deltaF1: Promise.promisify(function(r,theta,s,done)
+    deltaF1: function(r,theta,s)
     {
       let args = new Float64Array(3);
 
       args[0] = r;
       args[1] = theta;
       args[2] = s;
-      done(null,nav_geo.deltaF1(args));
-    }),
-    deltaF2: Promise.promisify(function(r,theta,s,done)
+      return nav_geo.deltaF1(args);
+    },
+    deltaF2: function(r,theta,s)
     {
       let args = new Float64Array(3);
 
       args[0] = r;
       args[1] = theta;
       args[2] = s;
-      done(null,nav_geo.deltaF2(args));
-    }),
-    maelstorm: Promise.promisify(function(r,theta,s,phi,done)
+      return nav_geo.deltaF2(args);
+    },
+    maelstorm: function(r,theta,s,phi)
     {
       let args = new Float64Array(4);
 
@@ -143,9 +143,9 @@ module.exports = function()
       args[1] = theta;
       args[2] = s;
       args[3] = phi;
-      done(null,nav_geo.maelstorm(args));
-    }),
-    destination: Promise.promisify(function(lat,long,azmuth,distance,done)
+      return nav_geo.maelstorm(args);
+    },
+    destination: function(lat,long,azmuth,distance)
     {
       let args = new Float64Array(4);
 
@@ -153,9 +153,9 @@ module.exports = function()
       args[1] = long;
       args[2] = azmuth;
       args[3] = distance;
-      done(null,nav_geo.destination(args));
-    }),
-    forwardAzmuth: Promise.promisify(function(lat1,long1,lat2,long2,done)
+      return nav_geo.destination(args);
+    },
+    forwardAzmuth: function(lat1,long1,lat2,long2)
     {
       let args = new Float64Array(4);
 
@@ -163,9 +163,9 @@ module.exports = function()
       args[1] = long1;
       args[2] = lat2;
       args[3] = long2;
-      done(null,nav_geo.forwardAzmuth(args));
-    }),
-    haversine: Promise.promisify(function(lat1,long1,lat2,long2,done)
+      return nav_geo.forwardAzmuth(args);
+    },
+    haversine: function(lat1,long1,lat2,long2)
     {
       let args = new Float64Array(4);
 
@@ -173,8 +173,8 @@ module.exports = function()
       args[1] = long1;
       args[2] = lat2;
       args[3] = long2;
-      done(null,nav_geo.haversine(args));
-    }),
+      return nav_geo.haversine(args);
+    },
     kalmanInitialGuess: Promise.promisify(kalman.initialGuess),
     kalmanNewModel: Promise.promisify(kalman.newModel),
     kalmanPredict: Promise.promisify(kalman.predict),

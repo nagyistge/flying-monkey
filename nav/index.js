@@ -18,6 +18,7 @@ let flightData = {};
 let mTime = (new Date()).valueOf();
 let homeLocation = null;
 let targetGimbalPitch = null;
+let targetROI = null;
 let targetYaw = null;
 let checkingYaw = false;
 let checkYawCount = 0;
@@ -36,6 +37,7 @@ function recordFlightData(gpsObj,now)
 function rotateGimbal(keyDistance,alt)
 {
   if(alt == null) return;
+  if(homeLocation == null) homeLocation = threeDR.getHomeLocation();
   if(homeLocation == null) return;
    
   let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
@@ -53,6 +55,27 @@ function rotateGimbal(keyDistance,alt)
     targetGimbalPitch = pitch;
   }
   threeDR.rotateGimbal(pitch);
+}
+
+function setROI(currentLocation,newROI)
+{
+  if(newROI == null || isNaN(newROI.lat) || isNaN(newROI.long) || isNaN(newROI.alt)) return false;
+  if(targetROI == null)
+  {
+    targetROI = newROI;
+    threeDR.setROI(newROI.lat,newROI.long,newROI.alt);
+    return true;
+  }
+
+  let a = numerics.haversine(targetROI.lat,targetROI.long,newROI.lat,newROI.long);
+  let b = numerics.haversine(currentLocation.lat,currentLocation.long,targetROI.lat,targetROI.long);
+  let c = numerics.haversine(currentLocation.lat,currentLocation.long,newROI.lat,newROI.long);
+  let theta = Math.acos(((b*b + c*c) - a*a)/(2*b*c))*180/Math.PI;
+
+  if(theta < 10) return false;
+  targetROI = newROI
+  threeDR.setROI(newROI.lat,newROI.long,newROI.alt);
+  return true;
 }
 
 function setVelocity(newVelocity)
@@ -118,11 +141,11 @@ const planParallelCourse = Promise.coroutine(function *(planData)
     destLong -= 0.25*planData.home.vLong;
   }
 
-  let homeToFutureTargetAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,destLat,destLong);
-  let homeToFutureTargetDistance = yield numerics.haversine(planData.home.lat,planData.home.long,destLat,destLong);
-  let speed = yield numerics.speed(homeToFutureTargetDistance);
-  let homeToKeyAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
-  let homeToKeyDistance = yield numerics.haversine(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
+  let homeToFutureTargetAzmuth = numerics.forwardAzmuth(planData.home.lat,planData.home.long,destLat,destLong);
+  let homeToFutureTargetDistance = numerics.haversine(planData.home.lat,planData.home.long,destLat,destLong);
+  let speed = numerics.speed(homeToFutureTargetDistance);
+  let homeToKeyAzmuth = numerics.forwardAzmuth(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
+  let homeToKeyDistance = numerics.haversine(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
 
   console.log(homeToFutureTargetAzmuth,homeToFutureTargetDistance,speed,homeToKeyAzmuth,homeToKeyDistance);
 
@@ -143,12 +166,12 @@ const planParallelCourse = Promise.coroutine(function *(planData)
 
 const planTetheredCourse = Promise.coroutine(function *(planData)
 {
-  let keyToHomeAzmuth = yield numerics.forwardAzmuth(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
-  let r = yield numerics.haversine(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
+  let keyToHomeAzmuth = numerics.forwardAzmuth(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
+  let r = numerics.haversine(planData.key.lat,planData.key.long,planData.home.lat,planData.home.long);
   let s = planData.key.speed;
   let keyToHomeAngle = Math.PI/2 - keyToHomeAzmuth;
   let keyAngle = Math.PI/2 - planData.key.azmuth;
-  let deltaF = yield numerics.maelstorm(r,keyToHomeAngle,s,keyAngle);
+  let deltaF = numerics.maelstorm(r,keyToHomeAngle,s,keyAngle);
   let ve = -deltaF[0];
   let vn = -deltaF[1];
   let futureKeyLat = planData.key.lat;
@@ -169,8 +192,8 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let yaw = homeToFutureKeyAzmuth*180/Math.PI + 10;
 */
 
-  let homeToKeyAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
-  let homeToKeyDistance = yield numerics.haversine(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
+  let homeToKeyAzmuth = numerics.forwardAzmuth(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
+  let homeToKeyDistance = numerics.haversine(planData.home.lat,planData.home.long,planData.key.lat,planData.key.long);
   let yaw = homeToKeyAzmuth*180/Math.PI;
 
   if(yaw > 360) yaw -= 360;
@@ -180,18 +203,21 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   {
     maxExecutedPlanId = planData.planId;
     setVelocity({ vn:vn, ve:ve, vd:0 });
+    if(setROI(planData.home,planData.key)) gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,planData.key.alt);
+    //rotateGimbal(r,planData.home.alt);
   
+/*
     let resYaw = setYaw(yaw);
 
-    rotateGimbal(r,planData.home.alt);
 
     if(typeof resYaw  == "number")
     {
       let now = new Date();
-      let LL = yield numerics.destination(planData.home.lat,planData.home.long,resYaw*Math.PI/180,homeToKeyDistance);
+      let LL = numerics.destination(planData.home.lat,planData.home.long,resYaw*Math.PI/180,homeToKeyDistance);
 
       gpsDB.addGPSCoord("^","goal",now.valueOf(),LL[0],LL[1],planData.home.alt);
     }
+*/
   }
 });
 
@@ -211,9 +237,9 @@ const assemblePlanData = Promise.coroutine(function *(planId)
   if(latencyFactor > 1) latencyFactor = 1;
   if(!srcLost)
   {
-    homeUpdated = yield numerics.destination(homeState.lat,homeState.long,homeState.azmuth,homeState.speed*latencyFactor);
-    keyUpdated = yield numerics.destination(keyState.lat,keyState.long,keyState.azmuth,keyState.speed*latencyFactor);
-    if(targetState != null) targetUpdated = yield numerics.destination(targetState.lat,targetState.long,targetState.azmuth,targetState.speed*latencyFactor);
+    homeUpdated = numerics.destination(homeState.lat,homeState.long,homeState.azmuth,homeState.speed*latencyFactor);
+    keyUpdated = numerics.destination(keyState.lat,keyState.long,keyState.azmuth,keyState.speed*latencyFactor);
+    if(targetState != null) targetUpdated = numerics.destination(targetState.lat,targetState.long,targetState.azmuth,targetState.speed*latencyFactor);
   }
 
   //console.log(`latencyFactor = ${latencyFactor} compensation: hs = ${homeState.speed*latencyFactor} ts = ${targetState.speed*latencyFactor} ks = ${keyState.speed*latencyFactor}`)
@@ -329,11 +355,11 @@ const updateGoal = Promise.coroutine(function *()
     let goalSerial = goal.serial;
     let now = new Date();
     let homeState = home.src.current;
-    let homeSpeed = yield numerics.haversine(homeState.lat,homeState.long,homeState.lat + homeState.vLat,homeState.long + homeState.vLong);
-    let homeAzmuth = yield numerics.forwardAzmuth(homeState.lat,homeState.long,homeState.lat + homeState.vLat,homeState.long + homeState.vLong);
+    let homeSpeed = numerics.haversine(homeState.lat,homeState.long,homeState.lat + homeState.vLat,homeState.long + homeState.vLong);
+    let homeAzmuth = numerics.forwardAzmuth(homeState.lat,homeState.long,homeState.lat + homeState.vLat,homeState.long + homeState.vLong);
     let keyState = key.src.current;
-    let keySpeed = yield numerics.haversine(keyState.lat,keyState.long,keyState.lat + keyState.vLat,keyState.long + keyState.vLong);
-    let keyAzmuth = yield numerics.forwardAzmuth(keyState.lat,keyState.long,keyState.lat + keyState.vLat,keyState.long + keyState.vLong);
+    let keySpeed = numerics.haversine(keyState.lat,keyState.long,keyState.lat + keyState.vLat,keyState.long + keyState.vLong);
+    let keyAzmuth = numerics.forwardAzmuth(keyState.lat,keyState.long,keyState.lat + keyState.vLat,keyState.long + keyState.vLong);
     let targetState;
     let targetSpeed;
     let targetAzmuth;
@@ -343,8 +369,8 @@ const updateGoal = Promise.coroutine(function *()
     if(target && target.src.current)
     {
       targetState = target.src.current;
-      targetSpeed = yield numerics.haversine(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
-      targetAzmuth = yield numerics.forwardAzmuth(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
+      targetSpeed = numerics.haversine(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
+      targetAzmuth = numerics.forwardAzmuth(targetState.lat,targetState.long,targetState.lat + targetState.vLat,targetState.long + targetState.vLong);
       if(targetAzmuth < 0) targetAzmuth += 2*Math.PI;
     }
 
@@ -407,8 +433,8 @@ const updateParallelTarget = Promise.coroutine(function *(gpsObj)
 
   if(separationVectors[gpsObj.id] == null)
   {
-    let azmuth = yield numerics.forwardAzmuth(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
-    let distance = yield numerics.haversine(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
+    let azmuth = numerics.forwardAzmuth(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
+    let distance = numerics.haversine(gpsObj.src.current.lat,gpsObj.src.current.long,home.src.current.lat,home.src.current.long);
 
 
     separationVectors[gpsObj.id] =
@@ -438,7 +464,7 @@ const updateParallelTarget = Promise.coroutine(function *(gpsObj)
     };
     */
 
-    let LL = yield numerics.destination(gpsObj.src.current.lat,gpsObj.src.current.long,separationVectors[gpsObj.id].azmuth,separationVectors[gpsObj.id].distance);
+    let LL = numerics.destination(gpsObj.src.current.lat,gpsObj.src.current.long,separationVectors[gpsObj.id].azmuth,separationVectors[gpsObj.id].distance);
 
     let translated =
     {

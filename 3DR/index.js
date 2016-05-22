@@ -215,6 +215,10 @@ module.exports =
   {
     if(shell != null && isArmed) shell.send("rtl");
   },
+  setROI:function(lat,long,alt)
+  {
+    if(shell != null && isArmed) shell.send(`setROI ${lat} ${long} ${alt}`);
+  },
   setVelocity:function(vn,ve,vd)
   {
     if(shell != null && isArmed) shell.send(`setVelocity ${vn} ${ve} ${vd}`);
