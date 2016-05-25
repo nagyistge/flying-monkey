@@ -38,7 +38,11 @@ function rotateGimbal(keyDistance,alt)
 {
   if(alt == null) return;
   if(homeLocation == null) homeLocation = threeDR.getHomeLocation();
-  if(homeLocation == null) return;
+  if(homeLocation == null)
+  {
+    console.log("homeLocation is null");
+    return;
+  }
    
   let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
 
@@ -54,6 +58,7 @@ function rotateGimbal(keyDistance,alt)
     }
     targetGimbalPitch = pitch;
   }
+  console.log("rotating pitch = ",pitch);
   threeDR.rotateGimbal(pitch);
 }
 
@@ -72,7 +77,7 @@ function setROI(currentLocation,newROI)
   let c = numerics.haversine(currentLocation.lat,currentLocation.long,newROI.lat,newROI.long);
   let theta = Math.acos(((b*b + c*c) - a*a)/(2*b*c))*180/Math.PI;
 
-  if(theta < 10) return false;
+  if(theta < 5) return false;
   targetROI = newROI
   threeDR.setROI(newROI.lat,newROI.long,newROI.alt);
   return true;
@@ -201,10 +206,19 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   if(maxExecutedPlanId == null || planData.planId > maxExecutedPlanId)
   {
+    let alt = planData.key.alt;
+
     maxExecutedPlanId = planData.planId;
     setVelocity({ vn:vn, ve:ve, vd:0 });
-    if(setROI(planData.home,planData.key)) gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,planData.key.alt);
-    //rotateGimbal(r,planData.home.alt);
+    if(homeLocation == null) homeLocation = threeDR.getHomeLocation();
+    if(homeLocation != null && homeLocation.alt != null && !isNaN(homeLocation.alt)) alt = homeLocation.alt;
+
+    if(alt != null && !isNaN(alt) && planData.home.alt != null && !isNaN(planData.home.alt))
+    {
+      rotateGimbal(r,planData.home.alt);
+      setROI(planData.home,{ lat:planData.key.lat, long:planData.key.long, alt:alt })
+//	      gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,alt);
+    }
   
 /*
     let resYaw = setYaw(yaw);

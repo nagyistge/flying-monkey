@@ -61,6 +61,7 @@ const init = Promise.promisify(function(done)
       {
         isArmed = json.isArmed;
         console.log("isArmed updated to: ",isArmed);
+	getHomeLocation();
       }
       else if(json.homeLocation != null)
       {
@@ -166,7 +167,6 @@ init().then(function()
     {
       shell.send("mode");
       router['attitude'].push(setAttitude);
-      getHomeLocation();
     }
   }
   catch(e) { shell = null; }

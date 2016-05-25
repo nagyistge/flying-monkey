@@ -85,8 +85,9 @@ def process_command(command,vehicle):
       q.put({ 'modeName':vehicle.mode.name })
    elif x[0] == "rotateGimbal":
       pitch = float(x[1])
-      cmd_str = "gimbal " + str(pitch)
-      vehicle.gimbal.rotate(pitch,0,0)
+      yaw = vehicle.attitude.yaw
+      cmd_str = "gimbal (" + str(pitch) + "," + str(yaw) + ")"
+      if yaw is not None and not math.isnan(yaw) and not math.isnan(pitch): vehicle.gimbal.rotate(pitch,0,yaw)
       q.put({ 'cmd':cmd_str })
    elif x[0] == "rtl":
       vehicle.mode = dronekit.VehicleMode("RTL")
