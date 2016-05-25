@@ -213,13 +213,13 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
     if(homeLocation == null) homeLocation = threeDR.getHomeLocation();
     if(homeLocation != null && homeLocation.alt != null && !isNaN(homeLocation.alt)) alt = homeLocation.alt;
 
-    if(alt != null && !isNaN(alt) && planData.home.alt != null && !isNaN(planData.home.alt))
+    if(alt != null && !isNaN(alt))
     {
-      rotateGimbal(r,planData.home.alt);
-      setROI(planData.home,{ lat:planData.key.lat, long:planData.key.long, alt:alt })
+      setROI(planData.home,{ lat:planData.key.lat, long:planData.key.long, alt:0 })
 //	      gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,alt);
     }
   
+    //rotateGimbal(r,planData.home.alt);
 /*
     let resYaw = setYaw(yaw);
 
