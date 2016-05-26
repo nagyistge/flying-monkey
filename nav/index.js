@@ -83,13 +83,13 @@ function setROI(currentLocation,newROI)
   let r2 = numerics.haversine(currentLocation.lat,currentLocation.long,newROI.lat,newROI.long);
   let alpha = (Math.PI/2 - numerics.forwardAzmuth(currentLocation.lat,currentLocation.long,targetROI.lat,targetROI.long) + 2*Math.PI) % (2%Math.PI);
   let beta = (Math.PI/2 - numerics.forwardAzmuth(currentLocation.lat,currentLocation.long,newROI.lat,newROI.long) + 2*Math.PI) % (2%Math.PI);
-  let x1 = r1*cos(alpha);
-  let x2 = r2*cos(beta);
-  let y1 = r1*sin(alpha);
-  let y2 = r2*sin(beta);
+  let x1 = r1*Math.cos(alpha);
+  let x2 = r2*Math.cos(beta);
+  let y1 = r1*Math.sin(alpha);
+  let y2 = r2*Math.sin(beta);
   let z1 = targetROI.alt;
   let z2 = newROI.alt;
-  let theta = acos((x1*x2 + y1*y2 + z1*z2)/(Math.sqrt(x1*x1 + y1*y1 + z1*z1)*Math.sqrt(x2*x2 + y2*y2 + z2*z2)));
+  let theta = Math.acos((x1*x2 + y1*y2 + z1*z2)/(Math.sqrt(x1*x1 + y1*y1 + z1*z1)*Math.sqrt(x2*x2 + y2*y2 + z2*z2)));
 
 console.log("theta = ",theta);
 
@@ -229,13 +229,14 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
     maxExecutedPlanId = planData.planId;
     setVelocity({ vn:vn, ve:ve, vd:0 });
     if(homeLocation == null) homeLocation = threeDR.getHomeLocation();
-    if(homeLocation != null && homeLocation.alt != null && !isNaN(homeLocation.alt)) alt = homeLocation.alt;
+    if(homeLocation != null && homeLocation.alt != null && !isNaN(homeLocation.alt)) roiAlt = homeLocation.alt;
 
-    if(alt != null && !isNaN(alt) && !isNaN(futureKeyLat)
+    if(roiAlt != null && !isNaN(roiAlt) && !isNaN(roiLat) && !isNaN(roiLong))
     {
-      let didSetROI = setROI(planData.home,{ lat:planData.key.lat, long:planData.key.long, alt:0 })
+//      let didSetROI = setROI(planData.home,{ lat:planData.key.lat, long:planData.key.long, alt:0 })
+      let didSetROI = setROI(planData.home,{ lat:roiLat, long:roiLong, alt:0 })
   
-      if(didSetROI) gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,alt);
+      //if(didSetROI) gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,roiAlt);
     }
   
     //rotateGimbal(r,planData.home.alt);
