@@ -89,7 +89,7 @@ function setROI(currentLocation,newROI)
   let y2 = r2*Math.sin(beta);
   let z1 = targetROI.alt;
   let z2 = newROI.alt;
-  let theta = Math.acos((x1*x2 + y1*y2 + z1*z2)/(Math.sqrt(x1*x1 + y1*y1 + z1*z1)*Math.sqrt(x2*x2 + y2*y2 + z2*z2)));
+  let theta = Math.acos((x1*x2 + y1*y2 + z1*z2)/(Math.sqrt(x1*x1 + y1*y1 + z1*z1)*Math.sqrt(x2*x2 + y2*y2 + z2*z2)))*180/Math.PI;
 
 console.log("theta = ",theta);
 
@@ -231,13 +231,15 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
     if(homeLocation == null) homeLocation = threeDR.getHomeLocation();
     if(homeLocation != null && homeLocation.alt != null && !isNaN(homeLocation.alt)) roiAlt = homeLocation.alt;
 
-    if(roiAlt != null && !isNaN(roiAlt) && !isNaN(roiLat) && !isNaN(roiLong))
+    if(!isNaN(futureKeyLat) && !isNaN(futureKeyLong))
     {
-//      let didSetROI = setROI(planData.home,{ lat:planData.key.lat, long:planData.key.long, alt:0 })
-      let didSetROI = setROI(planData.home,{ lat:roiLat, long:roiLong, alt:0 })
-  
-      //if(didSetROI) gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,roiAlt);
+       roiLat = futureKeyLat;
+       roiLong = futureKeyLong;
     }
+
+    let didSetROI = setROI(planData.home,{ lat:roiLat, long:roiLong, alt:0 })
+  
+    //if(didSetROI) gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,roiAlt);
   
     //rotateGimbal(r,planData.home.alt);
 /*
