@@ -72,10 +72,26 @@ function setROI(currentLocation,newROI)
     return true;
   }
 
+/*
   let a = numerics.haversine(targetROI.lat,targetROI.long,newROI.lat,newROI.long);
   let b = numerics.haversine(currentLocation.lat,currentLocation.long,targetROI.lat,targetROI.long);
   let c = numerics.haversine(currentLocation.lat,currentLocation.long,newROI.lat,newROI.long);
   let theta = Math.acos(((b*b + c*c) - a*a)/(2*b*c))*180/Math.PI;
+*/
+
+  let r1 = numerics.haversine(currentLocation.lat,currentLocation.long,targetROI.lat,targetROI.long);
+  let r2 = numerics.haversine(currentLocation.lat,currentLocation.long,newROI.lat,newROI.long);
+  let alpha = (Math.PI/2 - numerics.forwardAzmuth(currentLocation.lat,currentLocation.long,targetROI.lat,targetROI.long) + 2*Math.PI) % (2%Math.PI);
+  let beta = (Math.PI/2 - numerics.forwardAzmuth(currentLocation.lat,currentLocation.long,newROI.lat,newROI.long) + 2*Math.PI) % (2%Math.PI);
+  let x1 = r1*Math.cos(alpha);
+  let x2 = r2*Math.cos(beta);
+  let y1 = r1*Math.sin(alpha);
+  let y2 = r2*Math.sin(beta);
+  let z1 = targetROI.alt;
+  let z2 = newROI.alt;
+  let theta = Math.acos((x1*x2 + y1*y2 + z1*z2)/(Math.sqrt(x1*x1 + y1*y1 + z1*z1)*Math.sqrt(x2*x2 + y2*y2 + z2*z2)))*180/Math.PI;
+
+console.log("theta = ",theta);
 
   if(theta < 5) return false;
   targetROI = newROI
@@ -182,13 +198,13 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let futureKeyLat = planData.key.lat;
   let futureKeyLong = planData.key.long;
 
-/*
   if(!isNaN(planData.key.vLat) && !isNaN(planData.key.vLong))
   { 
-    futureKeyLat += 2.0*planData.key.vLat;
-    futureKeyLong += 2.0*planData.key.vLong;
+    futureKeyLat += 1.5*planData.key.vLat;
+    futureKeyLong += 1.5*planData.key.vLong;
   }
 
+/*
   let homeToFutureKeyAzmuth = yield numerics.forwardAzmuth(planData.home.lat,planData.home.long,futureKeyLat,futureKeyLong);
   let homeToFutureKeyDistance = yield numerics.haversine(planData.home.lat,planData.home.long,futureKeyLat,futureKeyLong);
 
@@ -206,20 +222,26 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
 
   if(maxExecutedPlanId == null || planData.planId > maxExecutedPlanId)
   {
-    let alt = planData.key.alt;
+    let roiLat = planData.key.lat;
+    let roiLong = planData.key.long;
+    let roiAlt = planData.key.alt;
 
     maxExecutedPlanId = planData.planId;
     setVelocity({ vn:vn, ve:ve, vd:0 });
     if(homeLocation == null) homeLocation = threeDR.getHomeLocation();
-    if(homeLocation != null && homeLocation.alt != null && !isNaN(homeLocation.alt)) alt = homeLocation.alt;
+    if(homeLocation != null && homeLocation.alt != null && !isNaN(homeLocation.alt)) roiAlt = homeLocation.alt;
 
-    if(alt != null && !isNaN(alt) && planData.home.alt != null && !isNaN(planData.home.alt))
+    if(!isNaN(futureKeyLat) && !isNaN(futureKeyLong))
     {
-      rotateGimbal(r,planData.home.alt);
-      setROI(planData.home,{ lat:planData.key.lat, long:planData.key.long, alt:alt })
-//	      gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,alt);
+       roiLat = futureKeyLat;
+       roiLong = futureKeyLong;
     }
+
+    let didSetROI = setROI(planData.home,{ lat:roiLat, long:roiLong, alt:0 })
   
+    //if(didSetROI) gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,roiAlt);
+  
+    //rotateGimbal(r,planData.home.alt);
 /*
     let resYaw = setYaw(yaw);
 
