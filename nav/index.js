@@ -587,13 +587,21 @@ module.exports =
     separationVectors[id] = null;
     gpsDB.addUpdate(id,deviceUpdate);
   },
+  record: function()
+  {
+    recording = true;
+  },
   rtl: function()
   {
     goal.plan = null;
     isManuvering = false;
     threeDR.rtl();
   },
-  stop: function() { goal.plan = "stop"; },
+  stop: function()
+  { 
+    goal.plan = "stop";
+    recording = false;
+  },
   track: function() { isManuvering = true; },
   untrack: function()
   {

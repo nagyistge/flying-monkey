@@ -139,6 +139,17 @@ const navParallel = Promise.promisify(function(url,id,callback)
   });
 });
 
+const navRecord = Promise.promisify(function(url,callback)
+{
+  request.post({
+    url: url + 'nav/record',
+    json: true
+  },
+  function (err,res,body) {
+    callback(err);
+  });
+});
+
 const navRTL = Promise.promisify(function(url,callback)
 {
   request.post({
@@ -238,6 +249,11 @@ const parallel = Promise.coroutine(function*(url,id)
   return yield navParallel(url,id);
 });
 
+const record = Promise.coroutine(function*(url)
+{
+  return yield navRecord(url);
+});
+
 const rtl = Promise.coroutine(function*(url)
 {
   return yield navRTL(url);
@@ -285,8 +301,9 @@ module.exports =
   launch:launch,
   loiter:loiter,
   parallel:parallel,
-  rtl:rtl,
+  record:record,
   reset:reset,
+  rtl:rtl,
   send:send,
   stop:stop,
   tether:tether,

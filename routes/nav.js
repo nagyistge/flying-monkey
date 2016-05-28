@@ -72,9 +72,22 @@ router.post('/parallel',function(req,res,next)
   else next();
 });
 
+router.post('/record',function(req,res,next)
+{
+  nav.record();
+  res.status(200).send('OK');
+});
+
 router.post('/rtl',function(req,res,next)
 {
   nav.rtl();
+  res.status(200).send('OK');
+});
+
+router.post('/stop',function(req,res,next)
+{
+  console.log("stop");
+  nav.stop();
   res.status(200).send('OK');
 });
 
@@ -91,13 +104,6 @@ router.post('/tether',function(req,res,next)
     res.status(200).send('OK');
   }
   else next();
-});
-
-router.post('/stop',function(req,res,next)
-{
-  console.log("stop");
-  nav.stop();
-  res.status(200).send('OK');
 });
 
 router.post('/track',function(req,res,next)
