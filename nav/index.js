@@ -611,7 +611,7 @@ module.exports =
   },
   record: function()
   {
-    recording = true;
+    isRecording = true;
   },
   rtl: function()
   {
@@ -622,7 +622,7 @@ module.exports =
   stop: function()
   { 
     goal.plan = "stop";
-    recording = false;
+    isRecording = false;
   },
   track: function() { isManuvering = true; },
   untrack: function()
