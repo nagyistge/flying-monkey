@@ -43,7 +43,7 @@ function rotateGimbal(keyDistance,alt)
     console.log("homeLocation is null");
     return;
   }
-   
+
   let pitch = Math.atan2(keyDistance,alt - homeLocation.alt)*180/Math.PI - 90;
 
   if(targetGimbalPitch == null) targetGimbalPitch = pitch;
@@ -79,6 +79,15 @@ function setROI(currentLocation,newROI)
   let theta = Math.acos(((b*b + c*c) - a*a)/(2*b*c))*180/Math.PI;
 */
 
+  let homeAlt = 0;
+
+  if(homeLocation == null) homeLocation = threeDR.getHomeLocation();
+  if(homeLocation == null) { console.log("homeLocation is null"); }
+  else
+  {
+    homeAlt = currentLocation.alt - homeLocation.alt;
+  }
+
   let r1 = numerics.haversine(currentLocation.lat,currentLocation.long,targetROI.lat,targetROI.long);
   let r2 = numerics.haversine(currentLocation.lat,currentLocation.long,newROI.lat,newROI.long);
   let alpha = (Math.PI/2 - numerics.forwardAzmuth(currentLocation.lat,currentLocation.long,targetROI.lat,targetROI.long) + 2*Math.PI) % (2%Math.PI);
@@ -87,11 +96,11 @@ function setROI(currentLocation,newROI)
   let x2 = r2*Math.cos(beta);
   let y1 = r1*Math.sin(alpha);
   let y2 = r2*Math.sin(beta);
-  let z1 = targetROI.alt;
-  let z2 = newROI.alt;
+  let z1 = targetROI.alt - homeAlt;
+  let z2 = newROI.alt - homeAlt;
   let theta = Math.acos((x1*x2 + y1*y2 + z1*z2)/(Math.sqrt(x1*x1 + y1*y1 + z1*z1)*Math.sqrt(x2*x2 + y2*y2 + z2*z2)))*180/Math.PI;
 
-console.log("theta = ",theta);
+console.log(`theta = ${theta} homeAlt = ${homeAlt}`);
 
   if(theta < 5) return false;
   targetROI = newROI
@@ -199,7 +208,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let futureKeyLong = planData.key.long;
 
   if(!isNaN(planData.key.vLat) && !isNaN(planData.key.vLong))
-  { 
+  {
     futureKeyLat += 1.5*planData.key.vLat;
     futureKeyLong += 1.5*planData.key.vLong;
   }
@@ -238,9 +247,9 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
     }
 
     let didSetROI = setROI(planData.home,{ lat:roiLat, long:roiLong, alt:0 })
-  
+
     //if(didSetROI) gpsDB.addGPSCoord("^","goal",planData.key.lat,planData.key.long,roiAlt);
-  
+
     //rotateGimbal(r,planData.home.alt);
 /*
     let resYaw = setYaw(yaw);
@@ -620,7 +629,7 @@ module.exports =
     threeDR.rtl();
   },
   stop: function()
-  { 
+  {
     goal.plan = "stop";
     isRecording = false;
   },
