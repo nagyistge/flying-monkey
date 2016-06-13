@@ -145,6 +145,16 @@ module.exports = function()
       args[3] = phi;
       return nav_geo.maelstorm(args);
     },
+    follow: function(r,theta,s,phi)
+    {
+      let args = new Float64Array(4);
+
+      args[0] = r;
+      args[1] = theta;
+      args[2] = s;
+      args[3] = phi;
+      return nav_geo.follow(args);
+    },
     destination: function(lat,long,azmuth,distance)
     {
       let args = new Float64Array(4);

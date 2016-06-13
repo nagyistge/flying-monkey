@@ -96,18 +96,19 @@ module.exports =
     let a = s + 1/(r_s/2);
     let ax = a*Math.cos(phi);
     let ay = a*Math.sin(phi);
+    let gx = 0;
+    let gy = 0;
 
     if(((ax - x)*(ax - x) + (ay - y)*(ay - y)) > ((-ax - x)*(-ax - x) + (-ay - y)*(-ay - y)))
     {
-      gx = ax;
-      gy = ay;
+      gx = 0.3*(x + ax);
+      gy = 0.3*(y + ay);
     }
     else
     {
-      gx = -ax;
-      gy = -ay;
+      gx = 0.3*(x - ax);
+      gy = 0.3*(y - ay);
     }
-
 
     gradient[0] = (gx - s*Math.cos(phi));
     gradient[1] = (gy - s*Math.sin(phi));
