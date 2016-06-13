@@ -102,7 +102,7 @@ function setROI(currentLocation,newROI)
 
 console.log(`theta = ${theta} homeAlt = ${homeAlt}`);
 
-  if(theta < 5) return false;
+  if(theta < 3.5) return false;
   targetROI = newROI
   threeDR.setROI(newROI.lat,newROI.long,newROI.alt);
   return true;

@@ -59,7 +59,7 @@ module.exports =
     let phi = args[3];
     let x = r*Math.cos(theta);
     let y = r*Math.sin(theta);
-    let p = s + 1.5;
+    let p = 0.85*s;
 
     if(p < 2.5) p = 2.5;
 
@@ -78,6 +78,39 @@ module.exports =
     //gradient[1] = (ux*Math.sin(f) + uy*Math.cos(f)) - s*(0.5 - 0.5*Math.cos(-phi))*Math.sin(phi);
     gradient[0] = (ux*Math.cos(f) - uy*Math.sin(f)) - s*Math.cos(phi);
     gradient[1] = (ux*Math.sin(f) + uy*Math.cos(f)) - s*Math.sin(phi);
+    return gradient;
+  },
+  follow: function(args)
+  {
+    let gradient = [];
+    let r = args[0];
+    let theta = args[1];
+    let s = args[2];
+    let phi = args[3];
+    let x = r*Math.cos(theta);
+    let y = r*Math.sin(theta);
+    let r_s = r;
+
+    if(r_s < 0.1) r_s = 0.1;
+
+    let a = s + 1/(r_s/2);
+    let ax = a*Math.cos(phi);
+    let ay = a*Math.sin(phi);
+
+    if(((ax - x)*(ax - x) + (ay - y)*(ay - y)) > ((-ax - x)*(-ax - x) + (-ay - y)*(-ay - y)))
+    {
+      gx = ax;
+      gy = ay;
+    }
+    else
+    {
+      gx = -ax;
+      gy = -ay;
+    }
+
+
+    gradient[0] = (gx - s*Math.cos(phi));
+    gradient[1] = (gy - s*Math.sin(phi));
     return gradient;
   },
   destination: function(args)
