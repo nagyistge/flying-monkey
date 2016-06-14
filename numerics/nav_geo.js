@@ -99,15 +99,19 @@ module.exports =
     let gx = 0;
     let gy = 0;
 
-    if(((ax - x)*(ax - x) + (ay - y)*(ay - y)) > ((-ax - x)*(-ax - x) + (-ay - y)*(-ay - y)))
+    if(((ax - x)*(ax - x) + (ay - y)*(ay - y)) > ((ax + x)*(ax + x) + (ay + y)*(ay + y)))
     {
-      gx = 0.3*(x + ax);
-      gy = 0.3*(y + ay);
+      let g = 0.3*(1 - Math.exp(-((ax + x)*(ax + x) + (ay + y)*(ay + y))/10);
+
+      gx = g*(x + ax);
+      gy = g*(y + ay);
     }
     else
     {
-      gx = 0.3*(x - ax);
-      gy = 0.3*(y - ay);
+      let g = 0.3*(1 - Math.exp(-((ax - x)*(ax - x) + (ay - y)*(ay - y))/10);
+
+      gx = g*(x - ax);
+      gy = g*(y - ay);
     }
 
     gradient[0] = (gx - s*Math.cos(phi));
