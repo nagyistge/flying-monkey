@@ -101,14 +101,14 @@ module.exports =
 
     if(((ax - x)*(ax - x) + (ay - y)*(ay - y)) > ((ax + x)*(ax + x) + (ay + y)*(ay + y)))
     {
-      let g = 0.3*(1 - Math.exp(-((ax + x)*(ax + x) + (ay + y)*(ay + y))/10);
+      let g = 0.3*(1 - Math.exp(-((ax + x)*(ax + x) + (ay + y)*(ay + y))/10));
 
       gx = g*(x + ax);
       gy = g*(y + ay);
     }
     else
     {
-      let g = 0.3*(1 - Math.exp(-((ax - x)*(ax - x) + (ay - y)*(ay - y))/10);
+      let g = 0.3*(1 - Math.exp(-((ax - x)*(ax - x) + (ay - y)*(ay - y))/10));
 
       gx = g*(x - ax);
       gy = g*(y - ay);

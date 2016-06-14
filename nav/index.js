@@ -203,7 +203,7 @@ const planTetheredCourse = Promise.coroutine(function *(planData)
   let keyAngle = Math.PI/2 - planData.key.azmuth;
   let deltaF;
 
-  if(s <= 3) deltaF = numerics.maelstorm(r,keyToHomeAngle,s,keyAngle);
+  if(s <= 4) deltaF = numerics.maelstorm(r,keyToHomeAngle,s,keyAngle);
   else deltaF = numerics.follow(r,keyToHomeAngle,s,keyAngle);
 
   let ve = -deltaF[0];
